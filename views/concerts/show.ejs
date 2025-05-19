@@ -1,0 +1,30 @@
+<div class="card">
+    <div class="row g-0">
+        <div class="col-md-4">
+            <img src="<%= concert.image %>" class="img-fluid rounded-start" alt="<%= concert.name %>">
+        </div>
+        <div class="col-md-8">
+            <div class="card-body">
+                <h2 class="card-title"><%= concert.name %></h2>
+                <p class="card-text">
+                    <i class="fas fa-calendar-day"></i> <strong>Date:</strong> <%= concert.date.toDateString() %><br>
+                    <i class="fas fa-clock"></i> <strong>Time:</strong> <%= concert.time %><br>
+                    <i class="fas fa-map-marker-alt"></i> <strong>Venue:</strong> <%= concert.venue %><br>
+                    <i class="fas fa-ticket-alt"></i> <strong>Ticket Price:</strong> $<%= concert.ticketPrice %><br>
+                    <i class="fas fa-ticket-alt"></i> <strong>Available Tickets:</strong> <%= concert.availableTickets %>
+                    <% if (concert.image) { %>
+  <img src="/uploads/<%= concert.image %>" alt="Concert Image" width="300">
+<% } %>
+                </p>
+                <p class="card-text"><small class="text-muted">Added on <%= concert.createdAt.toDateString() %></small></p>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="/concerts/<%= concert._id %>/edit" class="btn btn-warning">Edit</a>
+        <form action="/concerts/<%= concert._id %>?_method=DELETE" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+        <a href="/concerts" class="btn btn-secondary float-end">Back to All Concerts</a>
+    </div>
+</div>

@@ -1,0 +1,43 @@
+<h2 class="mb-4">Add New Concert</h2>
+
+<form action="/concerts" method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="name" class="form-label">Concert Name</label>
+        <input type="text" class="form-control" id="name" name="name" required>
+    </div>
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" class="form-control" id="date" name="date" required>
+        </div>
+        <div class="col-md-6">
+            <label for="time" class="form-label">Time</label>
+            <input type="time" class="form-control" id="time" name="time" required>
+        </div>
+    </div>
+    
+    <div class="mb-3">
+        <label for="venue" class="form-label">Venue</label>
+        <input type="text" class="form-control" id="venue" name="venue" required>
+    </div>
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="ticketPrice" class="form-label">Ticket Price ($)</label>
+            <input type="number" step="0.01" class="form-control" id="ticketPrice" name="ticketPrice" required>
+        </div>
+        <div class="col-md-6">
+            <label for="availableTickets" class="form-label">Available Tickets</label>
+            <input type="number" class="form-control" id="availableTickets" name="availableTickets" required>
+        </div>
+    </div>
+    
+    <div class="mb-3">
+        <label for="image" class="form-label">Concert Image</label>
+        <input type="file" class="form-control" id="image" name="image" >
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Add Concert</button>
+    <a href="/concerts" class="btn btn-secondary">Cancel</a>
+</form>

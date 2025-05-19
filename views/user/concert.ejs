@@ -1,0 +1,50 @@
+
+
+<div class="container mt-4">
+  <% if (success) { %>
+    <div class="alert alert-success"><%= success %></div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+  <% } %>
+
+  <div class="card">
+    <img src="<%= concert.image %>" class="card-img-top" alt="<%= concert.name %>">
+    <div class="card-body">
+      <h1 class="card-title"><%= concert.name %></h1>
+      <div class="concert-details mb-4">
+        <p><i class="fas fa-calendar-alt"></i> <strong>Date:</strong> <%= concert.date.toDateString() %></p>
+        <p><i class="fas fa-clock"></i> <strong>Time:</strong> <%= concert.time %></p>
+        <p><i class="fas fa-map-marker-alt"></i> <strong>Venue:</strong> <%= concert.venue %></p>
+        <p><i class="fas fa-ticket-alt"></i> <strong>Price:</strong> $<%= concert.ticketPrice.toFixed(2) %></p>
+        <p><i class="fas fa-chair"></i> <strong>Available Tickets:</strong> <%= concert.availableTickets %></p>
+      </div>
+
+      <% if (concert.availableTickets > 0) { %>
+        <div class="booking-form">
+          <h3>Book Tickets</h3>
+          <form action="/bookings" method="POST">
+            <input type="hidden" name="concertId" value="<%= concert._id %>">
+            
+            <div class="form-group mb-3">
+              <label for="tickets">Number of Tickets (Max 3 per user)</label>
+              <select class="form-control" id="tickets" name="tickets" required>
+                <% const maxTickets = Math.min(3, concert.availableTickets); %>
+                <% for (let i = 1; i <= maxTickets; i++) { %>
+                  <option value="<%= i %>"><%= i %></option>
+                <% } %>
+              </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Book Now</button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="alert alert-warning">This concert is sold out!</div>
+      <% } %>
+      
+      <a href="/concerts" class="btn btn-secondary mt-3">Back to Concerts</a>
+    </div>
+  </div>
+</div>
+
