@@ -43,6 +43,7 @@ exports.postLogin = async (req, res) => {
       return res.render('auth/login', { error: 'Invalid credentials' });
     }
     
+    // Save user in session
     req.session.user = user;
     res.redirect('/concerts');
   } catch (err) {
