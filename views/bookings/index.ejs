@@ -1,7 +1,13 @@
-
-
 <div class="container mt-4">
   <h2>My Bookings</h2>
+  
+  <% if (success) { %>
+    <div class="alert alert-success"><%= success %></div>
+  <% } %>
+  
+  <% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+  <% } %>
   
   <% if (bookings.length === 0) { %>
     <div class="alert alert-info">You haven't booked any tickets yet.</div>
@@ -10,11 +16,20 @@
       <% bookings.forEach(booking => { %>
         <div class="col-md-4 mb-4">
           <div class="card h-100">
-            <img src="<%= booking.concert.image %>" class="card-img-top" alt="<%= booking.concert.name %>">
+            <img src="<%= booking.concert.image %>" 
+                 class="card-img-top" 
+                 alt="<%= booking.concert.name %>"
+                 onerror="this.onerror=null;this.src='/images/default-concert.jpg'">
             <div class="card-body">
               <h5 class="card-title"><%= booking.concert.name %></h5>
               <p class="card-text">
-                <i class="fas fa-calendar-day"></i> <%= booking.concert.date.toDateString() %><br>
+                <i class="fas fa-calendar-day"></i> 
+                <%= booking.concert.date.toLocaleDateString('en-US', { 
+                  weekday: 'short', 
+                  month: 'short', 
+                  day: 'numeric', 
+                  year: 'numeric' 
+                }) %><br>
                 <i class="fas fa-clock"></i> <%= booking.concert.time %><br>
                 <i class="fas fa-ticket-alt"></i> Tickets: <%= booking.tickets %><br>
                 <i class="fas fa-dollar-sign"></i> Total: $<%= (booking.tickets * booking.concert.ticketPrice).toFixed(2) %>
@@ -24,6 +39,9 @@
               <small class="text-muted">
                 Booked on: <%= booking.bookedAt.toLocaleDateString() %>
               </small>
+              <form action="/bookings/<%= booking._id %>/cancel" method="POST" class="mt-2">
+                <button type="submit" class="btn btn-sm btn-danger">Cancel Booking</button>
+              </form>
             </div>
           </div>
         </div>
@@ -31,4 +49,3 @@
     </div>
   <% } %>
 </div>
-

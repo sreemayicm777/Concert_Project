@@ -1,3 +1,4 @@
+ <%- include('../partials/header') %>
 <h2 class="mb-4">Edit Concert</h2>
 
 <form action="/concerts/<%= concert._id %>?_method=PUT" method="POST" enctype="multipart/form-data">
@@ -54,3 +55,4 @@
         <a href="/concerts/<%= concert._id %>" class="btn btn-secondary">Cancel</a>
     </div>
 </form>
+<%- include('../partials/footer') %>

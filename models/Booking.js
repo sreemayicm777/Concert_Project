@@ -15,29 +15,58 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 1,
-    max: 3
+    max: 10
   },
   bookedAt: {
     type: Date,
     default: Date.now
+  },
+  status: {
+    type: String,
+    enum: ['confirmed', 'cancelled'],
+    default: 'confirmed'
   }
 });
 
 // Static method to handle ticket booking
 bookingSchema.statics.createBooking = async function(concertId, userId, ticketCount) {
-  // Check if user already has bookings for this concert
-  const existingBookings = await this.find({ concert: concertId, user: userId });
-  const totalTickets = existingBookings.reduce((sum, booking) => sum + booking.tickets, 0);
+  const Concert = require('./Concert');
   
-  if (totalTickets + ticketCount > 3) {
-    throw new Error(`You can only book ${3 - totalTickets} more tickets for this concert`);
+  // Check concert availability
+  const concert = await Concert.findById(concertId);
+  if (!concert) {
+    throw new Error('Concert not found');
+  }
+  
+  if (concert.availableTickets < ticketCount) { 
+    throw new Error(`Only ${concert.availableTickets} tickets available`);
   }
 
-  return this.create({
+  // Check user booking limit (max 10 per concert)
+  const existingBookings = await this.find({ 
+    concert: concertId, 
+    user: userId,
+    status: 'confirmed'
+  });
+  
+  const totalTickets = existingBookings.reduce((sum, booking) => sum + booking.tickets, 0);
+  
+  if (totalTickets + ticketCount > 10) {
+    throw new Error(`You can only book ${10 - totalTickets} more tickets for this concert`);
+  }
+
+  // Create booking
+  const booking = await this.create({
     concert: concertId,
     user: userId,
     tickets: ticketCount
   });
+
+  // Update concert availability
+  concert.availableTickets -= ticketCount;
+  await concert.save();
+
+  return booking;
 };
 
 module.exports = mongoose.model('Booking', bookingSchema);

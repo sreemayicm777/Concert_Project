@@ -5,21 +5,13 @@ exports.getSignup = (req, res) => {
   res.render('auth/signup', { error: null });
 };
 
-// Handle signup (now redirects to login)
+// Handle signup
 exports.postSignup = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-
-    // already registered email getting 
-    // const existingUser = await User.findOne({ email });
-    // if (existingUser) {
-    //   // 400 error for already registered email
-    //   res.status(400).json({ error: 'Email already registered' });
-    // }
     const user = new User({ username, email, password });
     await user.save();
     
-    // Redirect to login page with success message instead of auto-login
     req.flash('success', 'Registration successful! Please log in.');
     res.redirect('/login');
   } catch (err) {
@@ -28,12 +20,11 @@ exports.postSignup = async (req, res) => {
 };
 
 // Show login form
-
 exports.getLogin = (req, res) => {
-  res.render('auth/login', {error: null });
+  res.render('auth/login', { error: null });
 };
 
-// Handle login (unchanged)
+// Handle login with role-based redirection
 exports.postLogin = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -42,16 +33,23 @@ exports.postLogin = async (req, res) => {
     if (!user || !(await user.comparePassword(password))) {
       return res.render('auth/login', { error: 'Invalid credentials' });
     }
-    
+
     // Save user in session
     req.session.user = user;
-    res.redirect('/concerts');
+    
+    // Role-based redirection
+    if (user.role === 'admin') {
+      return res.redirect('/concerts');
+    } else {
+      return res.redirect('/bookings');
+    }
+    
   } catch (err) {
     res.render('auth/login', { error: err.message });
   }
 };
 
-// Handle logout (unchanged)
+// Handle logout
 exports.logout = (req, res) => {
   req.session.destroy();
   res.redirect('/');
