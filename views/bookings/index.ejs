@@ -1,51 +1,291 @@
-<div class="container mt-4">
-  <h2>My Bookings</h2>
-  
-  <% if (success) { %>
-    <div class="alert alert-success"><%= success %></div>
-  <% } %>
-  
-  <% if (error) { %>
-    <div class="alert alert-danger"><%= error %></div>
-  <% } %>
-  
-  <% if (bookings.length === 0) { %>
-    <div class="alert alert-info">You haven't booked any tickets yet.</div>
-  <% } else { %>
-    <div class="row">
-      <% bookings.forEach(booking => { %>
-        <div class="col-md-4 mb-4">
-          <div class="card h-100">
-            <img src="<%= booking.concert.image %>" 
-                 class="card-img-top" 
-                 alt="<%= booking.concert.name %>"
-                 onerror="this.onerror=null;this.src='/images/default-concert.jpg'">
-            <div class="card-body">
-              <h5 class="card-title"><%= booking.concert.name %></h5>
-              <p class="card-text">
-                <i class="fas fa-calendar-day"></i> 
-                <%= booking.concert.date.toLocaleDateString('en-US', { 
-                  weekday: 'short', 
-                  month: 'short', 
-                  day: 'numeric', 
-                  year: 'numeric' 
-                }) %><br>
-                <i class="fas fa-clock"></i> <%= booking.concert.time %><br>
-                <i class="fas fa-ticket-alt"></i> Tickets: <%= booking.tickets %><br>
-                <i class="fas fa-dollar-sign"></i> Total: $<%= (booking.tickets * booking.concert.ticketPrice).toFixed(2) %>
-              </p>
-            </div>
-            <div class="card-footer">
-              <small class="text-muted">
-                Booked on: <%= booking.bookedAt.toLocaleDateString() %>
-              </small>
-              <form action="/bookings/<%= booking._id %>/cancel" method="POST" class="mt-2">
-                <button type="submit" class="btn btn-sm btn-danger">Cancel Booking</button>
-              </form>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ConcertHub - Upcoming Concerts</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link href="/css/concerts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- Header -->
+    <header
+      class="bg-dark text-white sticky-top shadow-lg header"
+      style="width: 100vw; margin-left: calc(-50vw + 50%)"
+    >
+      <div class="container-fluid px-0">
+        <div class="px-4 py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h1 class="m-0">
+              <a
+                href="/"
+                class="text-white text-decoration-none d-flex align-items-center"
+              >
+                <i
+                  class="fas fa-music me-2"
+                  style="font-size: 1.5rem; padding-left: 30px"
+                ></i>
+                <span
+                  class="fw-bold"
+                  style="
+                    font-family: 'Montserrat', sans-serif;
+                    letter-spacing: 1px;
+                  "
+                  >ConcertHub</span
+                >
+              </a>
+            </h1>
+
+            <div class="d-flex align-items-center">
+              <div class="navbar-nav">
+                <% if (user) { %>
+                <div class="nav-item dropdown">
+                  <a
+                    class="nav-link dropdown-toggle d-flex align-items-center"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    style="cursor: pointer; padding-right: 50px"
+                  >
+                    <div
+                      class="avatar me-2"
+                      style="
+                        width: 32px;
+                        height: 32px;
+                        background-color: #6c757d;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <span class="text-white"
+                        ><%= user.username.charAt(0).toUpperCase() %></span
+                      >
+                    </div>
+                    <span class="me-1" style="padding-right: 10px">
+                      <%= user.username %> <% if (user.role === 'admin') { %>
+                      <span class="badge bg-primary ms-1">Admin</span>
+                      <% } %>
+                    </span>
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li>
+                      <a class="dropdown-item" href="/profile"
+                        ><i class="fas fa-user me-2"></i> Profile</a
+                      >
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="/settings"
+                        ><i class="fas fa-cog me-2"></i> Settings</a
+                      >
+                    </li>
+                    <% if (user.role === 'admin') { %>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                      <a class="dropdown-item text-danger" href="/admin"
+                        ><i class="fas fa-lock me-2"></i> Admin Panel</a
+                      >
+                    </li>
+                    <% } %>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                      <a class="dropdown-item" href="/logout"
+                        ><i class="fas fa-sign-out-alt me-2"></i> Logout</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+                <% } else { %>
+                <div class="d-flex">
+                  <a
+                    href="/login"
+                    class="btn btn-outline-light me-2 hover-scale"
+                  >
+                    <i class="fas fa-sign-in-alt me-1"></i> Login
+                  </a>
+                  <a href="/register" class="btn btn-success hover-scale">
+                    <i class="fas fa-user-plus me-1"></i> Register
+                  </a>
+                </div>
+                <% } %>
+              </div>
             </div>
           </div>
         </div>
-      <% }); %>
-    </div>
-  <% } %>
-</div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container py-5">
+      <% if (concerts.length === 0) { %>
+      <div class="alert alert-info text-center">
+        <h4>No concerts available</h4>
+        <p>Check back later or add a new concert.</p>
+      </div>
+      <% } else { %>
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <% concerts.forEach(concert => { %>
+        <div class="col">
+          <div class="card concert-card h-100">
+            <img
+              src="<%= concert.image || '/images/default-concert.jpg' %>"
+              class="concert-img"
+              alt="<%= concert.name %>"
+            />
+            <div class="card-body">
+              <div
+                class="d-flex justify-content-between align-items-start mb-2"
+              >
+                <h5 class="card-title fw-bold"><%= concert.name %></h5>
+                <% if (concert.status) { %>
+                <span class="badge bg-success"><%= concert.status %></span>
+                <% } %>
+              </div>
+              <p class="card-text text-muted">
+                <i class="fas fa-map-marker-alt me-2"></i><%= concert.venue %>
+              </p>
+              <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted">
+                  <i class="fas fa-calendar-day me-1"></i>
+                  <% if (concert.date) { %> <%= new
+                  Date(concert.date).toLocaleDateString('en-US', { weekday:
+                  'short', month: 'short', day: 'numeric', year: 'numeric' }) %>
+                  <% } %>
+                </span>
+                <span class="text-muted">
+                  <i class="fas fa-clock me-1"></i> <%= concert.time %>
+                </span>
+              </div>
+              <div class="ticket-info mb-3">
+                <div class="d-flex justify-content-between">
+                  <span class="fw-bold">Price:</span>
+                  <span class="text-success fw-bold">
+                    $<%= concert.ticketPrice?.toFixed(2) || '0.00' %>
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="fw-bold">Available:</span>
+                  <span
+                    class="<%= concert.availableTickets < 10 ? 'text-warning' : 'text-success' %>"
+                  >
+                    <%= concert.availableTickets || 0 %> tickets
+                  </span>
+                </div>
+              </div>
+
+              <% if (concert.availableTickets > 0) { %>
+              <form action="/bookings" method="POST" class="booking-form">
+                <input
+                  type="hidden"
+                  name="concertId"
+                  value="<%= concert._id %>"
+                />
+                <div class="mb-2">
+                  <label for="tickets-<%= concert._id %>" class="form-label"
+                    >Tickets</label
+                  >
+                  <select
+                    class="form-select"
+                    id="tickets-<%= concert._id %>"
+                    name="tickets"
+                    required
+                  >
+                    <% const maxAllowed = Math.min(10,
+                    concert.availableTickets); %> <% for (let i = 1; i <=
+                    maxAllowed; i++) { %>
+                    <option value="<%= i %>"><%= i %></option>
+                    <% } %>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label
+                    for="paymentMethod-<%= concert._id %>"
+                    class="form-label"
+                    >Payment Method</label
+                  >
+                  <select
+                    class="form-select"
+                    id="paymentMethod-<%= concert._id %>"
+                    name="paymentMethod"
+                    required
+                  >
+                    <option value="" disabled selected>
+                      Select a payment method
+                    </option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="upi">UPI</option>
+                    <option value="paypal">PayPal</option>
+                  </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                  <i class="fas fa-ticket-alt me-1"></i> Book Now
+                </button>
+              </form>
+              <% } else { %>
+              <div class="alert alert-danger mt-2">
+                This concert is sold out!
+              </div>
+              <% } %>
+            </div>
+            <div class="card-footer bg-white border-0"></div>
+          </div>
+        </div>
+        <% }); %>
+      </div>
+      <div class="mt-4 text-center">
+        <a href="/bookings" class="btn btn-info">
+          <i class="fas fa-ticket-alt me-1"></i> View My Bookings
+        </a>
+      </div>
+      <% } %>
+    </main>
+
+    <!-- Footer -->
+    <footer
+      class="bg-dark text-white py-3 mt-auto"
+      style="width: 100vw; margin-left: calc(-50vw + 50%)"
+    >
+      <div class="container-fluid px-0">
+        <div class="text-center px-4">
+          <p class="mb-0">
+            &copy; <span id="current-year"></span> ConcertHub. All rights
+            reserved.
+          </p>
+          <div class="mt-2">
+            <a
+              href="/about"
+              class="text-white-50 mx-2 text-decoration-none hover-underline"
+              >About Us</a
+            >
+            <a
+              href="/contact"
+              class="text-white-50 mx-2 text-decoration-none hover-underline"
+              >Contact</a
+            >
+            <a
+              href="/privacy"
+              class="text-white-50 mx-2 text-decoration-none hover-underline"
+              >Privacy Policy</a
+            >
+            <a
+              href="/terms"
+              class="text-white-50 mx-2 text-decoration-none hover-underline"
+              >Terms of Service</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+<script src="public/js/booking"></script>
+  </body>
+</html>

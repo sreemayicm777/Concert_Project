@@ -1,0 +1,49 @@
+/* concerts.css */
+.concert-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.concert-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.card-title {
+  min-height: 3rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ticket-info {
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  padding: 0.5rem;
+}
+
+.btn-book {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.empty-state {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.empty-state .fas {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #6c757d;
+}

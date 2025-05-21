@@ -3,12 +3,14 @@ const router = express.Router();
 const bookingController = require('../controllers/bookingController');
 const { isLoggedIn, isUser } = require('../middleware/auth');
 
-// Book tickets
-router.post('/', isLoggedIn, isUser, bookingController.bookTickets);
+
 
 // View user bookings
 router.get('/', isLoggedIn, isUser, bookingController.getUserBookingConcert);
+router.get('/mybook', isLoggedIn, isUser,bookingController.getUserBookings);
 
+// Book tickets
+router.post('/', isLoggedIn, isUser, bookingController.bookTickets);
 // Cancel booking
 router.post('/:id/cancel', isLoggedIn, isUser, bookingController.cancelBooking);
 

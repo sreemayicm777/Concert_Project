@@ -15,6 +15,7 @@ const concertRoutes = require('./routes/concertRoutes');
 const authRoutes = require('./routes/authRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 
+
 // Import models for admin initialization
 const User = require('./models/User');
 
@@ -97,7 +98,9 @@ app.use((err, req, res, next) => {
     req.flash('error', 'Invalid ID format');
     return res.redirect('/concerts');
   }
-  
+  app.get('/user/home', (req, res) => {
+  res.render('user/home');
+});
   res.status(500).render('error', {
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err : {}

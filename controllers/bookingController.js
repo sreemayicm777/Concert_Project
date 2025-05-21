@@ -1,6 +1,15 @@
 const Booking = require('../models/Booking');
 const Concert = require('../models/Concert');
 
+
+exports.getUserBookingConcert = async (req, res) => {
+  try {
+    const concerts = await Concert.find().sort({ date: 1 });
+    res.render('user/concert', { concerts });
+  } catch (err) {
+    res.render('error', { error: err.message });
+  }
+};
 exports.bookTickets = async (req, res) => {
   try {
     const { concertId, tickets } = req.body;
@@ -8,7 +17,7 @@ exports.bookTickets = async (req, res) => {
 
     if (!concertId || !tickets || isNaN(tickets) || tickets < 1) {
       req.flash('error', 'Invalid booking request');
-      return res.redirect('back');
+      return res.redirect('bookings/index');
     }
 
     const booking = await Booking.createBooking(concertId, userId, parseInt(tickets));
@@ -21,37 +30,15 @@ exports.bookTickets = async (req, res) => {
 };
 
 
-exports.getUserBookingConcert = async (req, res) => {
+
+// controllers/bookingController.js
+exports.getUserBookings= async (req, res) => {
   try {
     const concerts = await Concert.find().sort({ date: 1 });
-    res.render('user/concert', { concerts });
+    console.log(concerts)
+    res.render('bookings/index', { concerts });
   } catch (err) {
     res.render('error', { error: err.message });
-  }
-};
-// controllers/bookingController.js
-exports.getUserBookings = async (req, res) => {
-  try {
-    // Add debug logging
-    console.log('Current user:', req.user);
-    
-    if (!req.user || !req.user._id) {
-      throw new Error('User not authenticated');
-    }
-
-    const bookings = await Booking.find({ user: req.user._id })
-      .populate('concert')
-      .sort({ bookedAt: -1 });
-
-    res.render('bookings/index', { 
-      bookings,
-      success: req.flash('success'),
-      error: req.flash('error')
-    });
-  } catch (err) {
-    console.error('Booking error:', err);
-    req.flash('error', 'Failed to load bookings: ' + err.message);
-    res.redirect('/');
   }
 };
 
