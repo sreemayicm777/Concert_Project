@@ -32,13 +32,24 @@ exports.bookTickets = async (req, res) => {
 
 
 // controllers/bookingController.js
-exports.getUserBookings= async (req, res) => {
+exports.getUserBookings = async (req, res) => {
   try {
-    const concerts = await Concert.find().sort({ date: 1 });
-    console.log(concerts)
-    res.render('bookings/index', { concerts });
+    const bookings = await Booking.find({ user: req.user._id })
+      .populate('concert')
+      .sort({ createdAt: -1 });
+      console.log(bookings);
+      
+      
+
+    res.render('bookings/index', { 
+      bookings // Passing bookings instead of concerts
+    });
   } catch (err) {
-    res.render('error', { error: err.message });
+    console.error('Error fetching bookings:', err);
+    res.status(500).render('error', {
+      message: 'Failed to load your bookings',
+      error: err
+    });
   }
 };
 
