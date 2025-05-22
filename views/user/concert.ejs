@@ -1,187 +1,284 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 style="font-weight: bolder">Concerts</h1>
-  <div class="d-flex align-items-center gap-3">
-    <!-- View My Bookings Button -->
-    <a
-      href="/my-bookings"
-      class="btn btn-success btn-animated position-relative"
-    >
-      <i class="fas fa-ticket-alt me-2"></i>
-      View My Bookings
-      <span
-        class="booking-badge badge bg-light text-dark ms-2"
-        id="booking-count"
-        style="display: none"
-        >0</span
-      >
-    </a>
-
-    <!-- Items Per Page Dropdown -->
-    <div class="dropdown">
-      <button
-        class="btn btn-outline-secondary dropdown-toggle"
-        type="button"
-        id="itemsPerPageDropdown"
-        data-bs-toggle="dropdown"
-      >
-        <i class="fas fa-list me-1"></i>
-        Show: <span id="current-per-page">6</span>
-      </button>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="#" data-value="6">6 per page</a></li>
-        <li>
-          <a class="dropdown-item" href="#" data-value="12">12 per page</a>
-        </li>
-        <li>
-          <a class="dropdown-item" href="#" data-value="24">24 per page</a>
-        </li>
-        <li><a class="dropdown-item" href="#" data-value="0">Show all</a></li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- Add search and filter controls -->
-<div class="row mb-4">
-  <div class="col-md-6">
-    <div class="input-group">
-      <span class="input-group-text"><i class="fas fa-search"></i></span>
-      <input
-        type="text"
-        id="concert-search"
-        class="form-control"
-        placeholder="Search concerts..."
-      />
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="input-group">
-      <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-      <input type="date" id="date-filter" class="form-control" />
-      <button
-        class="btn btn-outline-secondary"
-        type="button"
-        id="clear-date"
-        title="Clear date filter"
-      >
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Results summary -->
-<div
-  id="results-summary"
-  class="d-flex justify-content-between align-items-center mb-3"
-  style="display: none !important"
->
-  <small class="text-muted">
-    <span id="results-count"></span>
-  </small>
-  <small class="text-muted">
-    <span id="page-info"></span>
-  </small>
-</div>
-
-<!-- No results message (hidden by default) -->
-<div id="no-results" class="alert alert-info text-center" style="display: none">
-  <i class="fas fa-info-circle me-2"></i>
-  No concerts found matching your search criteria.
-  <button class="btn btn-link btn-sm ms-2" id="clear-filters">
-    Clear all filters
-  </button>
-</div>
-
-<% if (concerts.length === 0) { %>
-<div class="empty-state alert alert-info py-5">
-  <i class="fas fa-music"></i>
-  <h3>No concerts found</h3>
-  <p class="mb-0">Add your first concert or check back later for updates!</p>
-</div>
-<% } else { %>
-<div
-  class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"
-  id="concerts-container"
->
-  <% concerts.forEach(concert => { %>
-  <div
-    class="col concert-card"
-    data-title="<%= concert.name.toLowerCase() %>"
-    data-venue="<%= concert.venue.toLowerCase() %>"
-    data-date="<%= concert.date.toISOString().split('T')[0] %>"
-    data-price="<%= concert.ticketPrice %>"
-  >
-    <div class="card h-100 shadow-sm concert-item">
-      <img
-        src="<%= concert.image %>"
-        class="card-img-top"
-        alt="<%= concert.name %>"
-        onerror="this.onerror=null;this.src='/images/default-concert.jpg'"
-      />
-      <div class="card-body d-flex flex-column">
-        <h5 class="card-title"><%= concert.name %></h5>
-        <p class="card-text mb-1">
-          <i class="fas fa-calendar-day me-1"></i>
-          <%= concert.date.toLocaleDateString('en-US', { weekday: 'short',
-          month: 'short', day: 'numeric', year: 'numeric' }) %>
-        </p>
-        <p class="card-text mb-1">
-          <i class="fas fa-clock me-1"></i> <%= concert.time %>
-        </p>
-        <p class="card-text mb-1">
-          <i class="fas fa-map-marker-alt me-1"></i> <%= concert.venue %>
-        </p>
-        <div class="ticket-info mb-3">
-          <p class="card-text mb-0">
-            <i class="fas fa-ticket-alt me-1"></i>
-            $<%= concert.ticketPrice.toFixed(2) %> |
-            <span
-              class="<%= concert.availableTickets < 20 ? 'text-danger' : '' %>"
-            >
-              <%= concert.availableTickets %> available
-            </span>
-          </p>
+<header class="bg-dark text-white sticky-top shadow-lg header" style="width: 100vw; margin-left: calc(-50vw + 50%); background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-bottom: 1px solid rgba(255,255,255,0.1);">
+    <div class="container-fluid px-0">
+        <div class="px-4 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="m-0">
+                    <a href="/bookings" class="text-white text-decoration-none d-flex align-items-center" style="text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                        <i class="fas fa-music me-2" style="font-size: 1.75rem; color: #4cc9f0;"></i>
+                        <span class="fw-bold" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1.5px; font-weight: 700 !important; font-size: 1.8rem;">ConcertHub</span>
+                    </a>
+                </h1>
+                
+                <div class="d-flex align-items-center">
+                    <!-- User Navigation -->
+                    <div class="navbar-nav">
+                        <% if (user) { %>
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" style="cursor: pointer; transition: all 0.3s ease;">
+                                    <div class="avatar me-2" style="width: 38px; height: 38px; background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                        <span class="text-white" style="font-weight: 600;"><%= user.username.charAt(0).toUpperCase() %></span>
+                                    </div>
+                                    <span class="me-1" style="font-weight: 500;">
+                                        <%= user.username %>
+                                        <% if (user.role === 'admin') { %>
+                                            <span class="badge bg-gradient ms-1" style="background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);">Admin</span>
+                                        <% } %>
+                                    </span>
+                                    <i class="fas fa-chevron-down ms-1" style="font-size: 0.8rem; opacity: 0.7;"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="background: rgba(30,30,46,0.98); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden;">
+                                    <li><a class="dropdown-item text-white" href="/profile" style="padding: 0.5rem 1.5rem; transition: all 0.2s ease;"><i class="fas fa-user me-2" style="color: #4cc9f0;"></i> Profile</a></li>
+                                    <li><a class="dropdown-item text-white" href="/settings" style="padding: 0.5rem 1.5rem; transition: all 0.2s ease;"><i class="fas fa-cog me-2" style="color: #4cc9f0;"></i> Settings</a></li>
+                                    <% if (user.role === 'admin') { %>
+                                        <li><hr class="dropdown-divider" style="border-color: rgba(255,255,255,0.1);"></li>
+                                        <li><a class="dropdown-item text-white" href="/admin" style="padding: 0.5rem 1.5rem; transition: all 0.2s ease;"><i class="fas fa-lock me-2" style="color: #f72585;"></i> Admin Panel</a></li>
+                                    <% } %>
+                                    <li><hr class="dropdown-divider" style="border-color: rgba(255,255,255,0.1);"></li>
+                                    <li><a class="dropdown-item text-white" href="/logout" style="padding: 0.5rem 1.5rem; transition: all 0.2s ease;"><i class="fas fa-sign-out-alt me-2" style="color: #f72585;"></i> Logout</a></li>
+                                </ul>
+                            </div>
+                        <% } else { %>
+                            <div class="d-flex">
+                                <a href="/login" class="btn btn-outline-light me-2 hover-scale" style="border-color: rgba(255,255,255,0.2); transition: all 0.3s ease; padding: 0.5rem 1.25rem; border-radius: 8px;">
+                                    <i class="fas fa-sign-in-alt me-1"></i> Login
+                                </a>
+                                <a href="/register" class="btn btn-success hover-scale" style="background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%); border: none; transition: all 0.3s ease; padding: 0.5rem 1.25rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(76,201,240,0.3);">
+                                    <i class="fas fa-user-plus me-1"></i> Register
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="mt-auto">
-          <a
-            href="/bookings/<%= concert._id %>"
-            class="btn btn-primary w-100 btn-book"
-          >
-            <i class="fas fa-ticket-alt me-1"></i> Book Now
-          </a>
-        </div>
-      </div>
     </div>
-  </div>
-  <% }); %>
+</header>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div class="d-flex align-items-center gap-3">
+            <!-- View My Bookings Button -->
+            <a href="/bookings/my-bookings/<%= user._id %>" class="btn btn-success btn-animated position-relative" style="background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); border: none; border-radius: 10px; padding: 0.75rem 1.5rem; box-shadow: 0 4px 12px rgba(56,161,105,0.3); transition: all 0.3s ease;">
+                <i class="fas fa-ticket-alt me-2"></i>
+                View My Bookings
+                <span class="booking-badge badge bg-light text-dark ms-2" id="booking-count" style="display: none; border-radius: 10px; padding: 0.25rem 0.5rem; font-weight: 600;">0</span>
+            </a>
+
+            <!-- Items Per Page Dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="itemsPerPageDropdown" data-bs-toggle="dropdown" style="border-color: rgba(255,255,255,0.2); color: white; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 0.75rem 1.25rem; transition: all 0.3s ease;">
+                    <i class="fas fa-list me-1"></i>
+                    Show: <span id="current-per-page" style="font-weight: 500;">6</span>
+                </button>
+                <ul class="dropdown-menu shadow-lg" style="background: rgba(30,30,46,0.98); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden;">
+                    <li><a class="dropdown-item text-white" href="#" data-value="6" style="padding: 0.5rem 1.5rem; transition: all 0.2s ease;">6 per page</a></li>
+                    <li><a class="dropdown-item text-white" href="#" data-value="12" style="padding: 0.5rem 1.5rem; transition: all 0.2s ease;">12 per page</a></li>
+                    <li><a class="dropdown-item text-white" href="#" data-value="24" style="padding: 0.5rem 1.5rem; transition: all 0.2s ease;">24 per page</a></li>
+                    <li><a class="dropdown-item text-white" href="#" data-value="0" style="padding: 0.5rem 1.5rem; transition: all 0.2s ease;">Show all</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add search and filter controls -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="input-group" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden;">
+                <span class="input-group-text" style="background: rgba(255,255,255,0.05); border: none; color: #4cc9f0;"><i class="fas fa-search"></i></span>
+                <input type="text" id="concert-search" class="form-control" placeholder="Search concerts..." style="background: rgba(255,255,255,0.05); border: none; color: white; padding: 0.75rem 1rem; border-radius: 0 10px 10px 0 !important;" />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="input-group" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden;">
+                <span class="input-group-text" style="background: rgba(255,255,255,0.05); border: none; color: #4cc9f0;"><i class="fas fa-calendar"></i></span>
+                <input type="date" id="date-filter" class="form-control" style="background: rgba(255,255,255,0.05); border: none; color: white; padding: 0.75rem 1rem;" />
+                <button class="btn btn-outline-secondary" type="button" id="clear-date" title="Clear date filter" style="background: rgba(255,255,255,0.05); border: none; color: white; transition: all 0.3s ease;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results summary -->
+    <div id="results-summary" class="d-flex justify-content-between align-items-center mb-4" style="display: none !important">
+        <small class="text-muted" style="font-size: 0.9rem; color: rgba(255,255,255,0.6) !important;">
+            <span id="results-count"></span>
+        </small>
+        <small class="text-muted" style="font-size: 0.9rem; color: rgba(255,255,255,0.6) !important;">
+            <span id="page-info"></span>
+        </small>
+    </div>
+
+    <!-- No results message (hidden by default) -->
+    <div id="no-results" class="alert alert-info text-center p-4" style="display: none; background: rgba(76,201,240,0.1); border: 1px solid rgba(76,201,240,0.2); border-radius: 12px; color: white;">
+        <i class="fas fa-info-circle me-2" style="color: #4cc9f0;"></i>
+        No concerts found matching your search criteria.
+        <button class="btn btn-link btn-sm ms-2" id="clear-filters" style="color: #4cc9f0; text-decoration: none;">Clear all filters</button>
+    </div>
+
+    <% if (concerts.length === 0) { %>
+    <div class="empty-state alert alert-info py-5 text-center" style="background: rgba(76,201,240,0.1); border: 1px solid rgba(76,201,240,0.2); border-radius: 16px;">
+        <i class="fas fa-music mb-3" style="font-size: 2.5rem; color: #4cc9f0;"></i>
+        <h3 style="color: white; font-weight: 600;">No concerts found</h3>
+        <p class="mb-0" style="color: rgba(255,255,255,0.7);">Add your first concert or check back later for updates!</p>
+    </div>
+    <% } else { %>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="concerts-container">
+        <% concerts.forEach(concert => { %>
+        <div class="col concert-card" data-title="<%= concert.name.toLowerCase() %>" data-venue="<%= concert.venue.toLowerCase() %>" data-date="<%= concert.date.toISOString().split('T')[0] %>" data-price="<%= concert.ticketPrice %>">
+            <div class="card h-100 shadow-lg concert-item" style="border: none; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); transition: all 0.3s ease; transform: translateY(0);">
+                <div style="overflow: hidden; height: 200px; position: relative;">
+                    <img src="<%= concert.image %>" class="card-img-top" alt="<%= concert.name %>" style="height: 100%; width: 100%; object-fit: cover; transition: transform 0.5s ease;" onerror="this.onerror=null;this.src='/images/default-concert.jpg'" />
+                    <div class="position-absolute top-0 end-0 m-3">
+                        <span class="badge rounded-pill bg-dark" style="background: rgba(0,0,0,0.7) !important; backdrop-filter: blur(5px); padding: 0.5rem 0.75rem; font-weight: 500;">
+                            $<%= concert.ticketPrice.toFixed(2) %>
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body d-flex flex-column" style="padding: 1.5rem;">
+                    <h5 class="card-title mb-3" style="font-weight: 700; color: white;"><%= concert.name %></h5>
+                    <div class="concert-details mb-4">
+                        <div class="d-flex align-items-center mb-2" style="color: rgba(255,255,255,0.8);">
+                            <i class="fas fa-calendar-day me-2" style="color: #4cc9f0; width: 20px;"></i>
+                            <span><%= concert.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2" style="color: rgba(255,255,255,0.8);">
+                            <i class="fas fa-clock me-2" style="color: #4cc9f0; width: 20px;"></i>
+                            <span><%= concert.time %></span>
+                        </div>
+                        <div class="d-flex align-items-center mb-3" style="color: rgba(255,255,255,0.8);">
+                            <i class="fas fa-map-marker-alt me-2" style="color: #4cc9f0; width: 20px;"></i>
+                            <span><%= concert.venue %></span>
+                        </div>
+                        <div class="ticket-availability">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                                    <i class="fas fa-chair me-1"></i> Available seats
+                                </span>
+                                <span class="<%= concert.availableTickets < 20 ? 'text-danger' : 'text-success' %>" style="font-weight: 600;">
+                                    <%= concert.availableTickets %>
+                                </span>
+                            </div>
+                            <div class="progress mt-1" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;">
+                                <div class="progress-bar <%= concert.availableTickets < 20 ? 'bg-danger' : 'bg-success' %>" role="progressbar" aria-valuenow="<%= concert.availableTickets %>" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-auto">
+                        <a href="/bookings/<%= concert._id %>" class="btn btn-primary w-100 btn-book" style="background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%); border: none; border-radius: 10px; padding: 0.75rem; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(67,97,238,0.3);">
+                            <i class="fas fa-ticket-alt me-2"></i> Book Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% }); %>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div id="pagination-container" class="mt-5">
+        <!-- Show More Button (Alternative to pagination) -->
+        <div id="show-more-container" class="text-center mb-4" style="display: none">
+            <button id="show-more-btn" class="btn btn-outline-primary btn-lg" style="border-color: #4361ee; color: #4361ee; border-radius: 12px; padding: 0.75rem 2rem; font-weight: 600; transition: all 0.3s ease;">
+                <i class="fas fa-chevron-down me-2"></i>
+                Show More Concerts
+                <span class="badge bg-primary ms-2" id="remaining-count" style="background: #4361ee !important; border-radius: 10px; padding: 0.35rem 0.65rem; font-weight: 600;"></span>
+            </button>
+        </div>
+
+        <!-- Traditional Pagination -->
+        <nav aria-label="Concert pagination" id="pagination-nav">
+            <ul class="pagination justify-content-center" id="pagination-list" style="gap: 0.5rem;">
+                <!-- Pagination will be generated by JavaScript -->
+            </ul>
+        </nav>
+
+        <!-- Pagination Info -->
+        <p class="text-center text-muted mt-3" id="pagination-info" style="color: rgba(255,255,255,0.6) !important; font-size: 0.9rem;">
+            <!-- Page info will be updated by JavaScript -->
+        </p>
+    </div>
+    <% } %>
 </div>
 
-<!-- Pagination Controls -->
-<div id="pagination-container" class="mt-5">
-  <!-- Show More Button (Alternative to pagination) -->
-  <div id="show-more-container" class="text-center mb-4" style="display: none">
-    <button id="show-more-btn" class="btn btn-outline-primary btn-lg">
-      <i class="fas fa-chevron-down me-2"></i>
-      Show More Concerts
-      <span class="badge bg-primary ms-2" id="remaining-count"></span>
-    </button>
-  </div>
-
-  <!-- Traditional Pagination -->
-  <nav aria-label="Concert pagination" id="pagination-nav">
-    <ul class="pagination justify-content-center" id="pagination-list">
-      <!-- Pagination will be generated by JavaScript -->
-    </ul>
-  </nav>
-
-  <!-- Pagination Info -->
-  <p class="text-center text-muted mt-2" id="pagination-info">
-    <!-- Page info will be updated by JavaScript -->
-  </p>
-</div>
-<% } %>
+<footer class="bg-dark text-white py-4 mt-auto footer" style="width: 100vw; margin-left: calc(-50vw + 50%); background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-top: 1px solid rgba(255,255,255,0.1);">
+    <div class="container-fluid px-0">
+        <div class="text-center px-4">
+            <p class="mb-3" style="color: rgba(255,255,255,0.7);">© 2023 ConcertHub. All rights reserved.</p>
+            <div class="mt-3 d-flex justify-content-center gap-3">
+                <a href="/about" class="text-white-50 text-decoration-none hover-underline" style="transition: all 0.3s ease; color: rgba(255,255,255,0.7) !important;">About Us</a>
+                <span style="color: rgba(255,255,255,0.3);">•</span>
+                <a href="/contact" class="text-white-50 text-decoration-none hover-underline" style="transition: all 0.3s ease; color: rgba(255,255,255,0.7) !important;">Contact</a>
+                <span style="color: rgba(255,255,255,0.3);">•</span>
+                <a href="/privacy" class="text-white-50 text-decoration-none hover-underline" style="transition: all 0.3s ease; color: rgba(255,255,255,0.7) !important;">Privacy Policy</a>
+                <span style="color: rgba(255,255,255,0.3);">•</span>
+                <a href="/terms" class="text-white-50 text-decoration-none hover-underline" style="transition: all 0.3s ease; color: rgba(255,255,255,0.7) !important;">Terms of Service</a>
+            </div>
+            <div class="mt-3">
+                <a href="#" class="text-white-50 mx-2" style="font-size: 1.25rem;"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="text-white-50 mx-2" style="font-size: 1.25rem;"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-white-50 mx-2" style="font-size: 1.25rem;"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="text-white-50 mx-2" style="font-size: 1.25rem;"><i class="fab fa-youtube"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
 
 <!-- Include the CSS and JS files -->
 <link rel="stylesheet" href="/css/booking.css" />
 <script src="/js/booking.js"></script>
+
+<style>
+    /* Additional custom styles */
+    body {
+        background: #0f0f1b;
+        color: white;
+    }
+    
+    .hover-scale:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    
+    .concert-item:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.3) !important;
+    }
+    
+    .concert-item:hover img {
+        transform: scale(1.05);
+    }
+    
+    .btn-book:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67,97,238,0.4) !important;
+    }
+    
+    .hover-underline:hover {
+        text-decoration: underline;
+        color: #4cc9f0 !important;
+    }
+    
+    .dropdown-item:hover {
+        background: rgba(76,201,240,0.2) !important;
+        padding-left: 1.75rem !important;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.05);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: rgba(76,201,240,0.5);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #4cc9f0;
+    }
+</style>
