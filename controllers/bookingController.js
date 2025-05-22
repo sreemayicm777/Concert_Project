@@ -1,4 +1,3 @@
-const Razorpay = require('razorpay');
 require('dotenv').config();
 const Booking = require('../models/Booking');
 const Concert = require('../models/Concert');
@@ -73,46 +72,38 @@ module.exports = {
   
     // Book tickets for a concert
     bookTickets: async (req, res) => {
-        try {
-            const { concertId, tickets ,  paymentMethod } = req.body;
-            const userId = req.user._id;
-// Validation
-            if (!concertId || !tickets || isNaN(tickets) || tickets < 1 || !paymentMethod) {
-              
-                req.flash('error', 'Invalid booking request');
-                return res.redirect('bookings/index');
-            }
+    try {
+        const { concertId } = req.params;
+        const { tickets, paymentMethod } = req.body;
+        const userId = req.user._id;
+        console.log('Booking request:', { concertId, tickets, paymentMethod, userId });
+        // Validation
+        if (!concertId || !tickets || isNaN(tickets) || tickets < 1 || !paymentMethod) {
+            req.flash('error', 'Invalid booking request');
+            return res.redirect('back');
+        }
 
-            const booking = await Booking.createBooking(concertId, userId, parseInt(tickets), paymentMethod);
-            res.json({
-            success: true,
-            booking: {
-                _id: booking._id,
-                tickets: booking.tickets,
-                concert: {
-                    _id: booking.concert._id,
-                    name: booking.concert.name,
-                    date: booking.concert.date,
-                    venue: booking.concert.venue,
-                    ticketPrice: booking.concert.ticketPrice
-                },
-                user: booking.user._id
-            }
+        const booking = await Booking.create({
+            concert: concertId,
+            user: userId,
+            tickets: parseInt(tickets),
+            paymentMethod,
+            paymentStatus: 'pending' // Set to pending initially
         });
-            req.flash('success', `Successfully booked ${booking.tickets} tickets!`);
-            res.redirect('/bookings/${booking._id}');
-        } catch (err) {
-          console.error('Booking error:', err);
-        if (req.accepts('json')) {
-            return res.status(500).json({
-                success: false,
-                message: err.message
-            });
-        }
-            req.flash('error', err.message);
-            res.redirect('back');
-        }
-    },
+
+        // Update concert availability
+        await Concert.findByIdAndUpdate(concertId, {
+            $inc: { availableTickets: -parseInt(tickets) }
+        });
+
+        req.flash('success', `Successfully booked ${booking.tickets} tickets!`);
+        res.redirect(`/bookings`);
+    } catch (err) {
+        console.error('Booking error:', err);
+        req.flash('error', err.message);
+        res.redirect('back');
+    }
+},
 
     // Cancel a booking
     cancelBooking: async (req, res) => {

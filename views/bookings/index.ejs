@@ -7,44 +7,279 @@
   <!-- CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="/css/concerts.css" rel="stylesheet">
-  <link href="/css/bookTicket.css" rel="stylesheet">
-  <!-- QR Code Library -->
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-dark: #3a0ca3;
+      --secondary: #4cc9f0;
+      --danger: #f72585;
+      --success: #38a169;
+      --warning: #f8d210;
+      --dark: #0f0f1b;
+      --darker: #0a0a12;
+      --light: #f8f9fa;
+      --lighter: #ffffff;
+      --muted: #6c757d;
+      --glass: rgba(255,255,255,0.05);
+      --glass-border: rgba(255,255,255,0.1);
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+      color: var(--lighter);
+      font-family: 'Montserrat', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .text-primary {
+      color: var(--primary) !important;
+    }
+    
+    .text-secondary {
+      color: var(--secondary) !important;
+    }
+    
+    .text-muted {
+      color: var(--muted) !important;
+    }
+    
+    .text-light {
+      color: var(--light) !important;
+    }
+    
+    .text-dark {
+      color: var(--dark) !important;
+    }
+    
+    .concert-details-card, .booking-card {
+      background: rgba(30,30,46,0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      color: var(--light);
+    }
+    
+    .concert-details-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+    
+    .concert-main-image {
+      height: 350px;
+      object-fit: cover;
+      width: 100%;
+    }
+    
+    .card-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+      border-bottom: none !important;
+      padding: 1.5rem;
+      color: var(--lighter);
+    }
+    
+    .meta-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: flex-start;
+      color: var(--light);
+    }
+    
+    .meta-item i {
+      font-size: 1.25rem;
+      color: var(--secondary);
+      margin-top: 0.25rem;
+    }
+    
+    .meta-item strong {
+      display: block;
+      font-weight: 600;
+      color: var(--secondary);
+    }
+    
+    .meta-item p {
+      margin-bottom: 0;
+      font-weight: 500;
+      color: var(--light);
+    }
+    
+    .form-control, .form-select {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--light);
+      padding: 0.75rem 1rem;
+      border-radius: 10px !important;
+    }
+    
+    .form-control::placeholder {
+      color: var(--muted);
+    }
+    
+    .form-control:focus, .form-select:focus {
+      background: var(--glass);
+      color: var(--light);
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 0.25rem rgba(76, 201, 240, 0.25);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border: none;
+      padding: 0.75rem;
+      font-weight: 600;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      color: var(--lighter);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+      color: var(--lighter);
+    }
+    
+    .badge {
+      font-weight: 500;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+    }
+    
+    .badge.bg-warning {
+      background: linear-gradient(135deg, var(--warning) 0%, #f9b208 100%) !important;
+      color: var(--dark) !important;
+    }
+    
+    .price-display {
+      background: var(--glass);
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin: 1.5rem 0;
+      color: var(--light);
+    }
+    
+    .price-display p {
+      font-size: 1.5rem;
+      margin: 0;
+      display: flex;
+      justify-content: space-between;
+      color: var(--light);
+    }
+    
+    #totalPrice {
+      color: var(--secondary);
+      font-weight: 700;
+    }
+    
+    .toggle-description {
+      border-radius: 8px;
+      font-size: 0.8rem;
+      padding: 0.25rem 0.75rem;
+      color: var(--secondary);
+      border: 1px solid var(--secondary);
+      background: transparent;
+    }
+    
+    .additional-details .badge {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--light);
+    }
+    
+    #ticket-error, #error-message {
+      background: rgba(247, 37, 133, 0.15);
+      border: 1px solid rgba(247, 37, 133, 0.3);
+      border-radius: 10px;
+      color: var(--light);
+    }
+    
+    #success-message {
+      background: rgba(56, 161, 105, 0.15);
+      border: 1px solid rgba(56, 161, 105, 0.3);
+      border-radius: 10px;
+      color: var(--light);
+    }
+    
+    .alert i {
+      margin-right: 0.5rem;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(76,201,240,0.5);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--secondary);
+    }
+    
+    .input-group-text {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--secondary);
+    }
+    
+    .card-title {
+      color: var(--lighter);
+    }
+    
+    .form-label {
+      color: var(--light);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+  </style>
 </head>
 <body>
   <%- include('../partials/header') %>
 
   <main class="container my-5">
-    <div class="row">
+    <!-- Status Messages -->
+    <div id="error-message" class="alert alert-danger mb-4" style="display: none;"></div>
+    <div id="success-message" class="alert alert-success mb-4" style="display: none;"></div>
+    
+    <div class="row g-4">
       <!-- Concert Details Column -->
-      <div class="col-md-6">
-        <div class="concert-details-card card mb-4">
+      <div class="col-lg-6">
+        <div class="concert-details-card card h-100">
           <!-- Concert Image with Badge -->
           <div class="position-relative">
             <img src="<%= concert.image || '/images/default-concert.jpg' %>" 
-                 class="card-img-top concert-main-image" 
+                 class="concert-main-image" 
                  alt="<%= concert.name %>">
             <% if (concert.availableTickets < 10) { %>
-              <span class="position-absolute top-0 end-0 badge bg-warning text-dark m-2">
+              <span class="position-absolute top-0 end-0 badge bg-warning text-dark m-3">
+                <i class="fas fa-exclamation-circle me-1"></i> 
                 <%= concert.availableTickets %> tickets left!
               </span>
             <% } %>
           </div>
 
           <div class="card-body">
-            <h1 class="card-title display-6 mb-3">
+            <h1 class="card-title mb-3" style="font-weight: 700; font-size: 2rem;">
               <%= concert.name %>
               <% if (concert.artist) { %>
-                <small class="text-muted d-block mt-1">by <%= concert.artist %></small>
+                <small class="text-muted d-block mt-2" style="font-size: 1.1rem;">by <%= concert.artist %></small>
               <% } %>
             </h1>
 
             <div class="concert-meta-grid mb-4">
               <div class="meta-item">
-                <i class="fas fa-calendar-day text-primary"></i>
+                <i class="fas fa-calendar-day"></i>
                 <div>
                   <strong>Date</strong>
                   <p><%= concert.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) %></p>
@@ -52,7 +287,7 @@
               </div>
               
               <div class="meta-item">
-                <i class="fas fa-clock text-primary"></i>
+                <i class="fas fa-clock"></i>
                 <div>
                   <strong>Time</strong>
                   <p><%= concert.time %></p>
@@ -60,7 +295,7 @@
               </div>
               
               <div class="meta-item">
-                <i class="fas fa-map-marker-alt text-primary"></i>
+                <i class="fas fa-map-marker-alt"></i>
                 <div>
                   <strong>Venue</strong>
                   <p><%= concert.venue %></p>
@@ -71,7 +306,7 @@
               </div>
               
               <div class="meta-item">
-                <i class="fas fa-tag text-primary"></i>
+                <i class="fas fa-tag"></i>
                 <div>
                   <strong>Price</strong>
                   <p>$<%= concert.ticketPrice.toFixed(2) %> per ticket</p>
@@ -80,35 +315,35 @@
             </div>
 
             <div class="concert-description mb-4">
-              <h5 class="d-flex justify-content-between align-items-center">
+              <h5 class="d-flex justify-content-between align-items-center" style="font-weight: 600;">
                 About the Event
-                <button class="btn btn-sm btn-outline-primary toggle-description" 
+                <button class="btn btn-sm toggle-description" 
                         type="button" 
                         data-bs-toggle="collapse" 
                         data-bs-target="#descriptionCollapse">
-                  Show More
+                  Show More <i class="fas fa-chevron-down ms-1"></i>
                 </button>
               </h5>
               <div class="collapse" id="descriptionCollapse">
-                <p class="mt-2"><%= concert.description || 'No additional details available.' %></p>
+                <p class="mt-3" style="line-height: 1.6;"><%= concert.description || 'No additional details available.' %></p>
               </div>
             </div>
 
-            <div class="additional-details">
+            <div class="additional-details mt-4">
               <% if (concert.genre) { %>
-                <span class="badge bg-light text-dark me-2 mb-2">
+                <span class="badge me-2 mb-2">
                   <i class="fas fa-music me-1"></i> <%= concert.genre %>
                 </span>
               <% } %>
               
               <% if (concert.duration) { %>
-                <span class="badge bg-light text-dark me-2 mb-2">
+                <span class="badge me-2 mb-2">
                   <i class="fas fa-hourglass-half me-1"></i> <%= concert.duration %> mins
                 </span>
               <% } %>
               
               <% if (concert.ageRestriction) { %>
-                <span class="badge bg-light text-dark me-2 mb-2">
+                <span class="badge me-2 mb-2">
                   <i class="fas fa-user me-1"></i> <%= concert.ageRestriction %>+
                 </span>
               <% } %>
@@ -118,54 +353,65 @@
       </div>
 
       <!-- Booking Form Column -->
-      <div class="col-md-6">
-        <div class="card booking-card">
-          <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Book Tickets</h4>
+      <div class="col-lg-6">
+        <div class="card booking-card h-100">
+          <div class="card-header">
+            <h4 class="mb-0"><i class="fas fa-ticket-alt me-2"></i> Book Tickets</h4>
           </div>
           <div class="card-body">
-            <form id="bookingForm">
+            <form method="POST" action="/bookings/book/<%= concert._id %>" id="bookingForm" class="h-100 d-flex flex-column">
               <input type="hidden" name="concertId" value="<%= concert._id %>">
               
-              <div class="ticket-counter mb-3">
-  <label for="tickets" class="form-label">Tickets:</label>
-  
-  <input 
-    type="number" 
-    id="tickets" 
-    class="form-control" 
-    name="ticketCount" 
-    min="1" 
-    max="<%= concert.availableTickets %>"
-    required
-    data-price="<%= concert.ticketPrice %>"
-    data-available="<%= concert.availableTickets %>"
-    placeholder="Enter number of tickets"
-  >
-  <div id="ticket-error" class="alert alert-danger mt-2" style="display: none;">
-    <i class="fas fa-exclamation-triangle"></i>
-    You can only book a maximum of 3 tickets per order.
-  </div>
-  <label for="paymentMethod" class="form-label">Payment Method:</label>
-  <select class="form-select" id="paymentMethod" name="paymentMethod" required>
-    <option value="" selected disabled>Select payment method</option>
-    <option value="credit_card">Credit Card</option>
-    <option value="paypal">PayPal</option>
-    <option value="bank_transfer">Bank Transfer</option>
-    <option value="crypto">Cryptocurrency</option>
-  </select>
-</div>
-
-              <div class="price-display mb-4">
-               <!-- Add these right after the opening <main> tag -->
-<div id="error-message" class="alert alert-danger mb-4" style="display: none;"></div>
-<div id="success-message" class="alert alert-success mb-4" style="display: none;"></div> 
-                <p class="fw-bold fs-5">Total: <span id="totalPrice">$<%= concert.ticketPrice.toFixed(2) %></span></p>
+              <div class="mb-4">
+                <label for="tickets" class="form-label fw-bold">Number of Tickets</label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-ticket-alt"></i>
+                  </span>
+                  <input 
+                    type="number" 
+                    id="tickets" 
+                    class="form-control" 
+                    name="ticketCount" 
+                    min="1" 
+                    max="<%= concert.availableTickets %>"
+                    required
+                    data-price="<%= concert.ticketPrice %>"
+                    data-available="<%= concert.availableTickets %>"
+                    value="1"
+                    style="border-radius: 0 10px 10px 0 !important;"
+                  >
+                </div>
+                <small class="text-muted">Maximum <%= concert.availableTickets %> tickets available</small>
+                <div id="ticket-error" class="alert alert-danger mt-2" style="display: none;">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  You can only book a maximum of 3 tickets per order.
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <label for="paymentMethod" class="form-label fw-bold">Payment Method</label>
+                <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                  <option value="" selected disabled>Select payment method</option>
+                  <option value="credit_card">Credit Card</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="crypto">Cryptocurrency</option>
+                </select>
               </div>
 
-              <button type="button" id="confirmBookingBtn" class="btn btn-primary w-100 py-2">
-  <i class="fas fa-credit-card me-2"></i> Confirm Booking
-</button>
+              <div class="price-display mt-auto">
+                <p class="fw-bold">
+                  <span>Total:</span>
+                  <input type="hidden" name="totalPrice" id="totalPriceInput" value="<%= concert.ticketPrice %>">
+                  <span id="totalPrice">$<%= concert.ticketPrice.toFixed(2) %></span>
+                </p>
+              </div>
+              <!-- <a href="/bookings/book/<%= concert._id %>"> -->
+              <button type="button" id="confirmBookingBtn" class="btn btn-primary w-100 py-3 mt-3">
+                <i class="fas fa-credit-card me-2"></i> Confirm Booking
+              </button>
+              <!-- </a> -->
             </form>
           </div>
         </div>
@@ -177,6 +423,38 @@
 
   <!-- JavaScript Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/js/bookTicket.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    // Ticket quantity and price calculation
+    document.getElementById('tickets').addEventListener('input', function() {
+      const ticketCount = parseInt(this.value);
+      const maxTickets = parseInt(this.getAttribute('max'));
+      const pricePerTicket = parseFloat(this.dataset.price);
+      
+      // Validate ticket count
+      if (ticketCount > 3) {
+        document.getElementById('ticket-error').style.display = 'block';
+        this.value = 3;
+        return;
+      } else {
+        document.getElementById('ticket-error').style.display = 'none';
+      }
+      
+      // Calculate total
+      const totalPrice = (this.value * pricePerTicket).toFixed(2);
+      document.getElementById('totalPrice').textContent = '$' + totalPrice;
+    });
+    function showMessage(type, text) {
+      const elementId = type === 'error' ? 'error-message' : 'success-message';
+      const element = document.getElementById(elementId);
+      
+      element.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'} me-2"></i> ${text}`;
+      element.style.display = 'block';
+      
+      setTimeout(() => {
+        element.style.display = 'none';
+      }, 5000);
+    }
+  </script>
 </body>
 </html>

@@ -23,7 +23,7 @@ router.get(
 
 // Create booking
 router.post(
-    '/bookings',
+    '/book/:concertId',
     isLoggedIn,
     isUser,
     bookingController.bookTickets
