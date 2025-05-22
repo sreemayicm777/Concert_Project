@@ -1,67 +1,777 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bookings</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <% include ../partials/header %>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Bookings | ConcertHub</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary: #4cc9f0;
+        --primary-dark: #4361ee;
+        --secondary: #f72585;
+        --dark: #1a1a2e;
+        --darker: #16213e;
+        --light: #f8f9fa;
+        --success: #38a169;
+        --danger: #e63946;
+        --warning: #ffbe0b;
+      }
 
-    <div class="container mt-5">
-        <h1 class="mb-4">My Bookings</h1>
+      body {
+        background: linear-gradient(135deg, #0f0f1b 0%, #0a0a12 100%);
+        color: white;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
 
-        <% if (success) { %>
-            <div class="alert alert-success"><%= success %></div>
-        <% } %>
-        <% if (error) { %>
-            <div class="alert alert-danger"><%= error %></div>
-        <% } %>
+      .header {
+        background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
 
-        <% if (bookings.length > 0) { %>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Concert</th>
-                            <th>Date</th>
-                            <th>Tickets</th>
-                            <th>Status</th>
-                            <th>Booked At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% concerts.forEach(booking => { %>
-                            <tr>
-                                <td><%= concert.name %></td>
-                                <td><%= concert.date.toLocaleString() %></td>
-                                <td><%= tickets %></td>
-                                <td>
-                                    <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : 'danger' %>">
-                                        <%= concert.status %>
-                                    </span>
-                                </td>
-                                <td><%= concert.bookedAt.toLocaleString() %></td>
-                                <td>
-                                    <% if (concert.status === 'confirmed') { %>
-                                        <form action="/bookings/<%= concert._id %>/cancel" method="POST">
-                                            <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
-                                        </form>
-                                    <% } %>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
+      .brand-logo {
+        font-family: "Montserrat", sans-serif;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--primary-dark) 100%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        border-color: rgba(76, 201, 240, 0.3);
+      }
+
+      .table-responsive {
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .table {
+        --bs-table-bg: transparent;
+        --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+        --bs-table-hover-bg: rgba(76, 201, 240, 0.08);
+        color: white;
+        margin-bottom: 0;
+      }
+
+      .table thead th {
+        background: rgba(76, 201, 240, 0.15);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+      }
+
+      .table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .table tbody tr:hover {
+        background: rgba(76, 201, 240, 0.1) !important;
+        transform: translateX(5px);
+      }
+
+      .badge {
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        padding: 0.5rem 0.75rem;
+      }
+
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--primary-dark) 0%,
+          #3a0ca3 100%
+        );
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+      }
+
+      .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        transition: all 0.3s ease;
+      }
+
+      .btn-outline-light:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .empty-state {
+        background: rgba(76, 201, 240, 0.05);
+        border: 1px dashed rgba(76, 201, 240, 0.3);
+        border-radius: 16px;
+      }
+
+      .concert-image {
+        height: 200px;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+
+      .concert-card:hover .concert-image {
+        transform: scale(1.05);
+      }
+
+      .footer {
+        background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: auto;
+      }
+
+      /* Animation classes */
+      .hover-scale {
+        transition: all 0.3s ease;
+      }
+
+      .hover-scale:hover {
+        transform: scale(1.02);
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: rgba(76, 201, 240, 0.5);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+      }
+
+      /* Print styles */
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        .container,
+        .container * {
+          visibility: visible;
+        }
+        .container {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          padding: 0;
+          margin: 0;
+          background: white;
+          color: black;
+        }
+        .btn,
+        .navbar,
+        .footer,
+        .no-print {
+          display: none !important;
+        }
+        a {
+          text-decoration: none !important;
+          color: inherit !important;
+        }
+        .table {
+          color: black;
+          --bs-table-striped-bg: rgba(0, 0, 0, 0.02);
+          --bs-table-hover-bg: rgba(0, 0, 0, 0.05);
+        }
+        .badge {
+          color: white !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="bg-dark text-white sticky-top shadow-lg header">
+      <div class="container-fluid px-0">
+        <div class="px-4 py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h1 class="m-0">
+              <a
+                href="/"
+                class="text-decoration-none d-flex align-items-center"
+              >
+                <i
+                  class="fas fa-music me-2"
+                  style="font-size: 1.75rem; color: var(--primary)"
+                ></i>
+                <span class="brand-logo" style="font-size: 1.8rem"
+                  >ConcertHub</span
+                >
+              </a>
+            </h1>
+
+            <div class="d-flex align-items-center">
+              <!-- User Navigation -->
+              <div class="navbar-nav">
+                <% if (user) { %>
+                <div class="nav-item dropdown">
+                  <a
+                    class="nav-link dropdown-toggle d-flex align-items-center"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    style="cursor: pointer"
+                  >
+                    <div class="avatar me-2">
+                      <span class="text-white"
+                        ><%= user.username.charAt(0).toUpperCase() %></span
+                      >
+                    </div>
+                    <span class="me-1" style="font-weight: 500">
+                      <%= user.username %> <% if (user.role === 'admin') { %>
+                      <span
+                        class="badge bg-gradient ms-1"
+                        style="
+                          background: linear-gradient(
+                            135deg,
+                            var(--secondary) 0%,
+                            #b5179e 100%
+                          );
+                        "
+                        >Admin</span
+                      >
+                      <% } %>
+                    </span>
+                    <i
+                      class="fas fa-chevron-down ms-1"
+                      style="font-size: 0.8rem; opacity: 0.7"
+                    ></i>
+                  </a>
+                  <ul
+                    class="dropdown-menu dropdown-menu-end shadow-lg border-0"
+                    style="
+                      background: rgba(30, 30, 46, 0.98);
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                    "
+                  >
+                    <li>
+                      <a class="dropdown-item text-white" href="/profile"
+                        ><i
+                          class="fas fa-user me-2"
+                          style="color: var(--primary)"
+                        ></i>
+                        Profile</a
+                      >
+                    </li>
+                    <li>
+                      <a class="dropdown-item text-white" href="/settings"
+                        ><i
+                          class="fas fa-cog me-2"
+                          style="color: var(--primary)"
+                        ></i>
+                        Settings</a
+                      >
+                    </li>
+                    <% if (user.role === 'admin') { %>
+                    <li>
+                      <hr
+                        class="dropdown-divider"
+                        style="border-color: rgba(255, 255, 255, 0.1)"
+                      />
+                    </li>
+                    <li>
+                      <a class="dropdown-item text-white" href="/admin"
+                        ><i
+                          class="fas fa-lock me-2"
+                          style="color: var(--secondary)"
+                        ></i>
+                        Admin Panel</a
+                      >
+                    </li>
+                    <% } %>
+                    <li>
+                      <hr
+                        class="dropdown-divider"
+                        style="border-color: rgba(255, 255, 255, 0.1)"
+                      />
+                    </li>
+                    <li>
+                      <a class="dropdown-item text-white" href="/logout"
+                        ><i
+                          class="fas fa-sign-out-alt me-2"
+                          style="color: var(--secondary)"
+                        ></i>
+                        Logout</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+                <% } else { %>
+                <div class="d-flex">
+                  <a
+                    href="/login"
+                    class="btn btn-outline-light me-2 hover-scale"
+                  >
+                    <i class="fas fa-sign-in-alt me-1"></i> Login
+                  </a>
+                  <a href="/register" class="btn btn-primary hover-scale">
+                    <i class="fas fa-user-plus me-1"></i> Register
+                  </a>
+                </div>
+                <% } %>
+              </div>
             </div>
-        <% } else { %>
-            <div class="alert alert-info">You have no bookings yet.</div>
-        <% } %>
-    </div>
+          </div>
+        </div>
+      </div>
+    </header>
 
-    <% include ../partials/footer %>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    <div class="container py-5 fade-in">
+      <div class="d-flex justify-content-between align-items-center mb-5">
+        <h2 class="m-0">
+          <i class="fas fa-ticket-alt me-2" style="color: var(--primary)"></i>
+          My Bookings
+        </h2>
+        <a href="/concerts" class="btn btn-outline-light hover-scale">
+          <i class="fas fa-arrow-left me-1"></i> Back to Concerts
+        </a>
+      </div>
+
+      <% if (booking.length === 0) { %>
+      <div class="empty-state alert py-5 text-center">
+        <i
+          class="fas fa-ticket-alt mb-3"
+          style="font-size: 2.5rem; color: var(--primary)"
+        ></i>
+        <h3>No bookings found</h3>
+        <p class="mb-4">You haven't booked any concerts yet.</p>
+        <a href="/concerts" class="btn btn-primary">
+          <i class="fas fa-music me-2"></i> Browse Concerts
+        </a>
+      </div>
+      <% } else { %>
+      <div class="table-responsive mb-5">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Booking ID</th>
+              <th>Concert</th>
+              <th>Tickets</th>
+              <th>Total Price</th>
+              <th>Booking Date</th>
+              <th>Status</th>
+              <th class="no-print">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% booking.forEach(book => { %>
+            <tr>
+              <td><%= book._id %></td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar me-3">
+                    <i class="fas fa-music text-white"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight: 600"><%= book.concert.name %></div>
+                    <small style="opacity: 0.8">
+                      <i class="fas fa-calendar-day me-1"></i>
+                      <%= book.bookingDate.toLocaleDateString('en-US', {
+                      weekday: 'short', month: 'short', day: 'numeric', year:
+                      'numeric' }) %>
+                    </small>
+                  </div>
+                </div>
+              </td>
+              <td><%= book.tickets %></td>
+              <td>
+                $<%= book.totalAmount ? book.totalAmount.toFixed(2) : '0.00' %>
+              </td>
+              <td>
+                <%= book.bookingDate.toLocaleDateString('en-US', { weekday:
+                'short', month: 'short', day: 'numeric', year: 'numeric' }) %>
+                <br />
+                <small style="opacity: 0.8"
+                  ><%= book.bookingDate.toLocaleTimeString() %></small
+                >
+              </td>
+              <td>
+                <span
+                  class="badge rounded-pill <%= book.status === 'confirmed' ? 'bg-success' : 'bg-warning' %>"
+                >
+                  <%= book.status %>
+                </span>
+              </td>
+              <td class="no-print">
+                <div class="d-flex gap-2">
+                  <a
+                    href="/bookings/view/<%= book._id %>"
+                    class="btn btn-sm btn-outline-primary"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <% if (book.status === 'confirmed') { %>
+                  <button
+                    class="btn btn-sm btn-outline-danger cancel-booking"
+                    data-booking-id="<%= book._id %>"
+                  >
+                    <i class="fas fa-times"></i>
+                  </button>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Booking Summary -->
+      <div class="row mt-5">
+        <div class="col-md-6 mb-4 mb-md-0">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title mb-4" style="color: var(--primary)">
+                <i class="fas fa-user me-2"></i> User Information
+              </h5>
+              <div class="mb-3">
+                <div style="opacity: 0.8; font-size: 0.9rem">Name</div>
+                <div style="font-weight: 500"><%= booking[0].user.name %></div>
+              </div>
+              <div class="mb-3">
+                <div style="opacity: 0.8; font-size: 0.9rem">Email</div>
+                <div style="font-weight: 500"><%= booking[0].user.email %></div>
+              </div>
+              <div>
+                <div style="opacity: 0.8; font-size: 0.9rem">Phone</div>
+                <div style="font-weight: 500">
+                  <%= booking[0].user.phone || 'Not provided' %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title mb-4" style="color: var(--primary)">
+                <i class="fas fa-receipt me-2"></i> Booking Summary
+              </h5>
+              <div class="d-flex justify-content-between mb-2">
+                <span style="opacity: 0.8">Total Bookings:</span>
+                <span style="font-weight: 500"><%= booking.length %></span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span style="opacity: 0.8">Total Tickets:</span>
+                <span style="font-weight: 500">
+                  <%= booking.reduce((sum, book) => sum + book.tickets, 0) %>
+                </span>
+              </div>
+              <div class="d-flex justify-content-between mb-4">
+                <span style="opacity: 0.8">Total Amount:</span>
+                <span style="font-weight: 600">
+                  $<%= booking.reduce((sum, book) => sum + (book.totalAmount ||
+                  0), 0).toFixed(2) %>
+                </span>
+              </div>
+              <hr style="border-color: rgba(255, 255, 255, 0.1)" />
+              <div class="text-center mt-3 no-print">
+                <button
+                  class="btn btn-primary"
+                  onclick="printBookings()"
+                  style="
+                    background: linear-gradient(
+                      135deg,
+                      #4361ee 0%,
+                      #3a0ca3 100%
+                    );
+                    border: none;
+                    border-radius: 10px;
+                    padding: 0.5rem 1.25rem;
+                  "
+                >
+                  <i class="fas fa-print me-1"></i> Print
+                </button>
+                <button class="btn btn-primary" onclick="window.print()">
+                  <i class="fas fa-print me-1"></i> Export
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    
+
+    <footer class="bg-dark text-white py-4 mt-auto footer">
+      <div class="container-fluid px-0">
+        <div class="text-center px-4">
+          <p class="mb-3" style="opacity: 0.7">
+            © <%= new Date().getFullYear() %> ConcertHub. All rights reserved.
+          </p>
+          <div class="mt-3 d-flex justify-content-center gap-3">
+            <a
+              href="/about"
+              class="text-decoration-none hover-underline"
+              style="opacity: 0.7"
+              >About Us</a
+            >
+            <span style="opacity: 0.3">•</span>
+            <a
+              href="/contact"
+              class="text-decoration-none hover-underline"
+              style="opacity: 0.7"
+              >Contact</a
+            >
+            <span style="opacity: 0.3">•</span>
+            <a
+              href="/privacy"
+              class="text-decoration-none hover-underline"
+              style="opacity: 0.7"
+              >Privacy Policy</a
+            >
+            <span style="opacity: 0.3">•</span>
+            <a
+              href="/terms"
+              class="text-decoration-none hover-underline"
+              style="opacity: 0.7"
+              >Terms of Service</a
+            >
+          </div>
+          <div class="mt-3">
+            <a href="#" class="mx-2" style="font-size: 1.25rem; opacity: 0.7"
+              ><i class="fab fa-facebook"></i
+            ></a>
+            <a href="#" class="mx-2" style="font-size: 1.25rem; opacity: 0.7"
+              ><i class="fab fa-twitter"></i
+            ></a>
+            <a href="#" class="mx-2" style="font-size: 1.25rem; opacity: 0.7"
+              ><i class="fab fa-instagram"></i
+            ></a>
+            <a href="#" class="mx-2" style="font-size: 1.25rem; opacity: 0.7"
+              ><i class="fab fa-youtube"></i
+            ></a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Add JavaScript for cancel booking functionality
+      document.querySelectorAll(".cancel-booking").forEach((button) => {
+        button.addEventListener("click", function () {
+          const bookingId = this.getAttribute("data-booking-id");
+          if (confirm("Are you sure you want to cancel this booking?")) {
+            fetch(`/bookings/cancel/${bookingId}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.success) {
+                  alert("Booking cancelled successfully");
+                  window.location.reload();
+                } else {
+                  alert("Error cancelling booking: " + data.message);
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while cancelling the booking");
+              });
+          }
+        });
+      });
+
+      // Export to PDF function (placeholder - would need a PDF library like jsPDF)
+      function printBookings() {
+        // Create a new window for printing
+        const printWindow = window.open("", "_blank");
+
+        // Get the HTML content to print
+        const contentToPrint = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>My Bookings</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #333; text-align: center; }
+                .print-header { margin-bottom: 20px; text-align: center; }
+                .print-header img { height: 60px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th { background-color: #f2f2f2; text-align: left; padding: 8px; }
+                td { padding: 8px; border-bottom: 1px solid #ddd; }
+                .summary { margin-top: 30px; padding: 15px; background-color: #f9f9f9; }
+                .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+                @page { size: auto; margin: 10mm; }
+            </style>
+        </head>
+        <body>
+            <div class="print-header">
+                <h1>My Concert Bookings</h1>
+                <p>Printed on ${new Date().toLocaleDateString()}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Concert</th>
+                        <th>Tickets</th>
+                        <th>Total Price</th>
+                        <th>Booking Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${document
+                      .querySelector("tbody")
+                      .innerHTML.replace(/<td style="[^"]*">/g, "<td>")}
+                </tbody>
+            </table>
+            
+            <div class="summary">
+                <h3>Booking Summary</h3>
+                <p>Total Bookings: ${
+                  document.querySelectorAll("tbody tr").length
+                }</p>
+                <p>Total Tickets: ${Array.from(
+                  document.querySelectorAll("tbody tr")
+                ).reduce(
+                  (sum, row) =>
+                    sum +
+                    parseInt(row.querySelector("td:nth-child(3)").textContent),
+                  0
+                )}</p>
+                <p>Total Amount: $${Array.from(
+                  document.querySelectorAll("tbody tr")
+                )
+                  .reduce((sum, row) => {
+                    const priceText =
+                      row.querySelector("td:nth-child(4)").textContent;
+                    return sum + parseFloat(priceText.replace("$", "") || 0);
+                  }, 0)
+                  .toFixed(2)}</p>
+            </div>
+            
+            <div class="footer">
+                <p>Thank you for using ConcertHub</p>
+                <p>© ${new Date().getFullYear()} ConcertHub. All rights reserved.</p>
+            </div>
+        </body>
+        </html>
+    `;
+
+        // Write the content to the new window
+        printWindow.document.open();
+        printWindow.document.write(contentToPrint);
+        printWindow.document.close();
+
+        // Wait for content to load before printing
+        printWindow.onload = function () {
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 500);
+        };
+      }
+
+      // Add animation to table rows
+      document.querySelectorAll("tbody tr").forEach((row, index) => {
+        row.style.animationDelay = `${index * 0.05}s`;
+        row.classList.add("fade-in");
+      });
+    </script>
+    <style>
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        .container,
+        .container * {
+          visibility: visible;
+        }
+        .container {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+        }
+        .btn,
+        .navbar,
+        .footer {
+          display: none !important;
+        }
+        a {
+          text-decoration: none !important;
+          color: inherit !important;
+        }
+      }
+    </style>
+  </body>
 </html>

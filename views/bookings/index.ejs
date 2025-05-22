@@ -353,66 +353,79 @@
       </div>
 
       <!-- Booking Form Column -->
-      <div class="col-lg-6">
-        <div class="card booking-card h-100">
-          <div class="card-header">
-            <h4 class="mb-0"><i class="fas fa-ticket-alt me-2"></i> Book Tickets</h4>
+      <div class="col-md-6">
+        <div class="card booking-card">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Book Tickets</h5>
           </div>
           <div class="card-body">
-            <form method="POST" action="/bookings/book/<%= concert._id %>" id="bookingForm" class="h-100 d-flex flex-column">
-              <input type="hidden" name="concertId" value="<%= concert._id %>">
-              
-              <div class="mb-4">
-                <label for="tickets" class="form-label fw-bold">Number of Tickets</label>
-                <div class="input-group">
-                  <span class="input-group-text">
-                    <i class="fas fa-ticket-alt"></i>
-                  </span>
-                  <input 
-                    type="number" 
-                    id="tickets" 
-                    class="form-control" 
-                    name="ticketCount" 
-                    min="1" 
-                    max="<%= concert.availableTickets %>"
-                    required
-                    data-price="<%= concert.ticketPrice %>"
-                    data-available="<%= concert.availableTickets %>"
-                    value="1"
-                    style="border-radius: 0 10px 10px 0 !important;"
-                  >
-                </div>
-                <small class="text-muted">Maximum <%= concert.availableTickets %> tickets available</small>
-                <div id="ticket-error" class="alert alert-danger mt-2" style="display: none;">
-                  <i class="fas fa-exclamation-triangle me-2"></i>
-                  You can only book a maximum of 3 tickets per order.
-                </div>
-              </div>
-              
-              <div class="mb-4">
-                <label for="paymentMethod" class="form-label fw-bold">Payment Method</label>
-                <select class="form-select" id="paymentMethod" name="paymentMethod" required>
-                  <option value="" selected disabled>Select payment method</option>
-                  <option value="credit_card">Credit Card</option>
-                  <option value="paypal">PayPal</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="crypto">Cryptocurrency</option>
-                </select>
-              </div>
+            <% if (user) { %>
+              <form action="/bookings/book/<%= concert._id %>" method="POST">
+                <input type="hidden" name="concertId" value="<%= concert._id %>">
+                <input type="hidden" name="userId" value="<%= user._id %>">
 
-              <div class="price-display mt-auto">
-                <p class="fw-bold">
-                  <span>Total:</span>
-                  <input type="hidden" name="totalPrice" id="totalPriceInput" value="<%= concert.ticketPrice %>">
-                  <span id="totalPrice">$<%= concert.ticketPrice.toFixed(2) %></span>
-                </p>
-              </div>
-              <!-- <a href="/bookings/book/<%= concert._id %>"> -->
-              <button type="button" id="confirmBookingBtn" class="btn btn-primary w-100 py-3 mt-3">
-                <i class="fas fa-credit-card me-2"></i> Confirm Booking
-              </button>
-              <!-- </a> -->
-            </form>
+                <div class="mb-3">
+                  <label for="name" class="form-label">Full Name</label>
+                  <input type="text" class="form-control" id="name" name="name" value="<%= user.name || '' %>" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="email" name="email" value="<%= user.email || '' %>"
+                    required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="phone" class="form-label">Phone Number</label>
+                  <input type="tel" class="form-control" id="phone" name="phone" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="ticketQuantity" class="form-label">Number of Tickets</label>
+                  <select class="form-select" id="ticketQuantity" name="ticketQuantity" required
+                    onchange="updateTotalPrice()">
+                    <% for (let i=1; i <=Math.min(10, concert.availableTickets || 0); i++) { %>
+                      <option value="<%= i %>">
+                        <%= i %>
+                      </option>
+                      <% } %>
+                  </select>
+                </div>
+
+                <!-- price -->
+                <div class="mb-3">
+                  <label for="totalPrice" class="form-label">Total Price</label>
+                  <input type="text" class="form-control" id="totalPrice" name="totalPrice"
+                    value="$<%= (concert.ticketPrice * 1)?.toFixed(2) || '0.00' %>" readonly>
+                </div>
+
+
+                <div class="mb-3">
+                  <label for="paymentMethod" class="form-label">Payment Method</label>
+                  <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                    <option value="credit">Credit Card</option>
+                    <option value="debit">Debit Card</option>
+                    <option value="paypal">PayPal</option>
+                  </select>
+                </div>
+
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-ticket-alt me-2"></i> Confirm Booking
+                  </button>
+                </div>
+              </form>
+              <% } else { %>
+                <div class="alert alert-warning">
+                  <h5 class="alert-heading">Please log in to book tickets</h5>
+                  <p>You need to be logged in to make a booking for this concert.</p>
+                  <hr>
+                  <div class="d-flex justify-content-between">
+                    <a href="/login" class="btn btn-outline-primary">Login</a>
+                    <a href="/register" class="btn btn-primary">Register</a>
+                  </div>
+                </div>
+                <% } %>
           </div>
         </div>
       </div>

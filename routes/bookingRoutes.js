@@ -29,6 +29,22 @@ router.post(
     bookingController.bookTickets
 );
 
+// View all bookings
+router.get(
+    '/my-bookings',
+    isLoggedIn,
+    isUser,
+    bookingController.getAllBookings
+);
+
+// View specific booking
+router.get(
+    '/my-bookings/:user_id',
+    isLoggedIn,
+    isUser,
+    bookingController.getBookingById
+);
+
 // Cancel booking
 router.post(
     '/:id/cancel',
