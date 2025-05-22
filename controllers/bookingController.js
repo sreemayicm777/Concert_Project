@@ -10,6 +10,8 @@ exports.getUserBookingConcert = async (req, res) => {
     res.render('error', { error: err.message });
   }
 };
+// Get user's bookings list (NEW)
+
 exports.bookTickets = async (req, res) => {
   try {
     const { concertId, tickets } = req.body;
@@ -28,31 +30,57 @@ exports.bookTickets = async (req, res) => {
     res.redirect('back');
   }
 };
-
-
-
-// controllers/bookingController.js
 exports.getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ user: req.user._id })
       .populate('concert')
-      .sort({ createdAt: -1 });
-      console.log(bookings);
-      
-      
+      .sort({ bookedAt: -1 });
 
-    res.render('bookings/index', { 
-      bookings // Passing bookings instead of concerts
+    res.render('user/my-bookings', { 
+      bookings,
+      success: req.flash('success'),
+      error: req.flash('error')
     });
   } catch (err) {
-    console.error('Error fetching bookings:', err);
-    res.status(500).render('error', {
-      message: 'Failed to load your bookings',
-      error: err
-    });
+    req.flash('error', err.message);
+    res.redirect('/');
   }
 };
 
+
+// controllers/bookingController.js
+exports.getConcertById = async (req, res) => {
+  try {
+    const concert = await Concert.findById(req.params.concert_id);
+    if (!concert) {
+      req.flash('error', 'Concert not found');
+      return res.redirect('/concerts');
+    }
+    res.render('bookings/index', { concert }); // Render a different template for single concert view
+  } catch (err) {
+    req.flash('error', err.message);
+    res.redirect('/concerts');
+  }
+}
+exports.createBooking = async (req, res) => {
+  try {
+    const booking = await Booking.createBooking(
+      req.body.concertId,
+      req.user._id,
+      parseInt(req.body.tickets)
+    );
+    
+    res.json({ 
+      success: true,
+      booking: booking
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
 exports.cancelBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id).populate('concert');

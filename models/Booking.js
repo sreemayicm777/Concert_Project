@@ -51,8 +51,8 @@ bookingSchema.statics.createBooking = async function(concertId, userId, ticketCo
   
   const totalTickets = existingBookings.reduce((sum, booking) => sum + booking.tickets, 0);
   
-  if (totalTickets + ticketCount > 10) {
-    throw new Error(`You can only book ${10 - totalTickets} more tickets for this concert`);
+  if (totalTickets + ticketCount > 3) {
+    throw new Error(`You can only book ${3 - totalTickets} more tickets for this concert`);
   }
 
   // Create booking

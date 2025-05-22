@@ -7,14 +7,12 @@ const { isLoggedIn, isUser } = require('../middleware/auth');
 
 // View user bookings
 router.get('/', isLoggedIn, isUser, bookingController.getUserBookingConcert);
-router.get('/', isLoggedIn, isUser, bookingController.getUserBookings);
-router.get('/concert/:concertId', isLoggedIn, isUser, bookingController.getUserBookings);
-
+router.get('/:concert_id', isLoggedIn, isUser, bookingController.getConcertById);
 // Book tickets
 router.post('/', isLoggedIn, isUser, bookingController.bookTickets);
 // Cancel booking
 router.post('/:id/cancel', isLoggedIn, isUser, bookingController.cancelBooking);
-
+router.get('/concerts', isLoggedIn, isUser, bookingController.getUserBookingConcert);
 
 // routes/index.js
 router.get('/debug', (req, res) => {

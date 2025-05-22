@@ -1,247 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ConcertHub - Upcoming Concerts</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-      rel="stylesheet"
-    />
-    <link href="/css/concerts.css" rel="stylesheet" />
-  </head>
-  <body>
-    <!-- Header -->
-    <header
-      class="bg-dark text-white sticky-top shadow-lg header"
-      style="width: 100vw; margin-left: calc(-50vw + 50%)"
-    >
-      <div class="container-fluid px-0">
-        <div class="px-4 py-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <h1 class="m-0">
-              <a
-                href="/"
-                class="text-white text-decoration-none d-flex align-items-center"
-              >
-                <i
-                  class="fas fa-music me-2"
-                  style="font-size: 1.5rem; padding-left: 30px"
-                ></i>
-                <span
-                  class="fw-bold"
-                  style="
-                    font-family: 'Montserrat', sans-serif;
-                    letter-spacing: 1px;
-                  "
-                  >ConcertHub</span
-                >
-              </a>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book <%= concert.name %> | ConcertHub</title>
+  <!-- CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="/css/concerts.css" rel="stylesheet">
+  <link href="/css/bookTicket.css" rel="stylesheet">
+  <!-- QR Code Library -->
+  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="container my-5">
+    <div class="row">
+      <!-- Concert Details Column -->
+      <div class="col-md-6">
+        <div class="concert-details-card card mb-4">
+          <!-- Concert Image with Badge -->
+          <div class="position-relative">
+            <img src="<%= concert.image || '/images/default-concert.jpg' %>" 
+                 class="card-img-top concert-main-image" 
+                 alt="<%= concert.name %>">
+            <% if (concert.availableTickets < 10) { %>
+              <span class="position-absolute top-0 end-0 badge bg-warning text-dark m-2">
+                <%= concert.availableTickets %> tickets left!
+              </span>
+            <% } %>
+          </div>
+
+          <div class="card-body">
+            <h1 class="card-title display-6 mb-3">
+              <%= concert.name %>
+              <% if (concert.artist) { %>
+                <small class="text-muted d-block mt-1">by <%= concert.artist %></small>
+              <% } %>
             </h1>
 
-            <div class="d-flex align-items-center">
-              <div class="navbar-nav">
-                <% if (user) { %>
-                <div class="nav-item dropdown">
-                  <a
-                    class="nav-link dropdown-toggle d-flex align-items-center"
-                    href="#"
-                    role="button"
-                    data-bs-toggle="dropdown"
-                    style="cursor: pointer; padding-right: 50px"
-                  >
-                    <div
-                      class="avatar me-2"
-                      style="
-                        width: 32px;
-                        height: 32px;
-                        background-color: #6c757d;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                      "
-                    >
-                      <span class="text-white"
-                        ><%= user.username.charAt(0).toUpperCase() %></span
-                      >
-                    </div>
-                    <span class="me-1" style="padding-right: 10px">
-                      <%= user.username %> <% if (user.role === 'admin') { %>
-                      <span class="badge bg-primary ms-1">Admin</span>
-                      <% } %>
-                    </span>
-                  </a>
-                  <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li>
-                      <a class="dropdown-item" href="/profile"
-                        ><i class="fas fa-user me-2"></i> Profile</a
-                      >
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="/settings"
-                        ><i class="fas fa-cog me-2"></i> Settings</a
-                      >
-                    </li>
-                    <% if (user.role === 'admin') { %>
-                    <li><hr class="dropdown-divider" /></li>
-                    <li>
-                      <a class="dropdown-item text-danger" href="/admin"
-                        ><i class="fas fa-lock me-2"></i> Admin Panel</a
-                      >
-                    </li>
-                    <% } %>
-                    <li><hr class="dropdown-divider" /></li>
-                    <li>
-                      <a class="dropdown-item" href="/logout"
-                        ><i class="fas fa-sign-out-alt me-2"></i> Logout</a
-                      >
-                    </li>
-                  </ul>
+            <div class="concert-meta-grid mb-4">
+              <div class="meta-item">
+                <i class="fas fa-calendar-day text-primary"></i>
+                <div>
+                  <strong>Date</strong>
+                  <p><%= concert.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) %></p>
                 </div>
-                <% } else { %>
-                <div class="d-flex">
-                  <a
-                    href="/login"
-                    class="btn btn-outline-light me-2 hover-scale"
-                  >
-                    <i class="fas fa-sign-in-alt me-1"></i> Login
-                  </a>
-                  <a href="/register" class="btn btn-success hover-scale">
-                    <i class="fas fa-user-plus me-1"></i> Register
-                  </a>
+              </div>
+              
+              <div class="meta-item">
+                <i class="fas fa-clock text-primary"></i>
+                <div>
+                  <strong>Time</strong>
+                  <p><%= concert.time %></p>
                 </div>
-                <% } %>
+              </div>
+              
+              <div class="meta-item">
+                <i class="fas fa-map-marker-alt text-primary"></i>
+                <div>
+                  <strong>Venue</strong>
+                  <p><%= concert.venue %></p>
+                  <% if (concert.city) { %>
+                    <small class="text-muted"><%= concert.city %>, <%= concert.country || '' %></small>
+                  <% } %>
+                </div>
+              </div>
+              
+              <div class="meta-item">
+                <i class="fas fa-tag text-primary"></i>
+                <div>
+                  <strong>Price</strong>
+                  <p>$<%= concert.ticketPrice.toFixed(2) %> per ticket</p>
+                </div>
               </div>
             </div>
+
+            <div class="concert-description mb-4">
+              <h5 class="d-flex justify-content-between align-items-center">
+                About the Event
+                <button class="btn btn-sm btn-outline-primary toggle-description" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#descriptionCollapse">
+                  Show More
+                </button>
+              </h5>
+              <div class="collapse" id="descriptionCollapse">
+                <p class="mt-2"><%= concert.description || 'No additional details available.' %></p>
+              </div>
+            </div>
+
+            <div class="additional-details">
+              <% if (concert.genre) { %>
+                <span class="badge bg-light text-dark me-2 mb-2">
+                  <i class="fas fa-music me-1"></i> <%= concert.genre %>
+                </span>
+              <% } %>
+              
+              <% if (concert.duration) { %>
+                <span class="badge bg-light text-dark me-2 mb-2">
+                  <i class="fas fa-hourglass-half me-1"></i> <%= concert.duration %> mins
+                </span>
+              <% } %>
+              
+              <% if (concert.ageRestriction) { %>
+                <span class="badge bg-light text-dark me-2 mb-2">
+                  <i class="fas fa-user me-1"></i> <%= concert.ageRestriction %>+
+                </span>
+              <% } %>
+            </div>
           </div>
         </div>
       </div>
-    </header>
 
-    <!-- Main Content -->
-   <main class="container py-5">
-  <% if (bookings.length === 0) { %>
-  <div class="alert alert-info text-center">
-    <h4>No bookings found</h4>
-    <p>You haven't booked any concerts yet.</p>
+      <!-- Booking Form Column -->
+      <div class="col-md-6">
+        <div class="card booking-card">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Book Tickets</h4>
+          </div>
+          <div class="card-body">
+            <form id="bookingForm">
+              <input type="hidden" name="concertId" value="<%= concert._id %>">
+              
+              <div class="ticket-counter mb-3">
+  <label for="tickets" class="form-label">Tickets:</label>
+  
+  <input 
+    type="number" 
+    id="tickets" 
+    class="form-control" 
+    name="ticketCount" 
+    min="1" 
+    max="<%= concert.availableTickets %>"
+    required
+    data-price="<%= concert.ticketPrice %>"
+    data-available="<%= concert.availableTickets %>"
+    placeholder="Enter number of tickets"
+  >
+  <div id="ticket-error" class="alert alert-danger mt-2" style="display: none;">
+    <i class="fas fa-exclamation-triangle"></i>
+    You can only book a maximum of 3 tickets per order.
   </div>
-  <% } else { %>
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    <% bookings.forEach(booking => { 
-         const concert = booking.concert;
-         if (!concert) return; // Safety check
-    %>
-    <div class="col">
-      <div class="card concert-card h-100">
-        <img
-          src="<%= concert.image || '/images/default-concert.jpg' %>"
-          class="concert-img"
-          alt="<%= concert.name %>"
-        />
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <h5 class="card-title fw-bold"><%= concert.name %></h5>
-            <% if (concert.status) { %>
-            <span class="badge bg-success"><%= concert.status %></span>
-            <% } %>
-          </div>
-          <p class="card-text text-muted">
-            <i class="fas fa-map-marker-alt me-2"></i><%= concert.venue %>
-          </p>
-          <div class="d-flex justify-content-between mb-3">
-            <span class="text-muted">
-              <i class="fas fa-calendar-day me-1"></i>
-              <% if (concert.date) { %>
-              <%= new Date(concert.date).toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              }) %>
-              <% } %>
-            </span>
-            <span class="text-muted">
-              <i class="fas fa-clock me-1"></i> <%= concert.time %>
-            </span>
-          </div>
-          <div class="ticket-info mb-3">
-            <div class="d-flex justify-content-between">
-              <span class="fw-bold">Price:</span>
-              <span class="text-success fw-bold">
-                $<%= concert.ticketPrice?.toFixed(2) || '0.00' %>
-              </span>
-            </div>
-            <div class="d-flex justify-content-between">
-              <span class="fw-bold">Tickets Booked:</span>
-              <span class="text-primary fw-bold"><%= booking.tickets %></span>
-            </div>
-            <% if (booking.paymentMethod) { %>
-            <div class="d-flex justify-content-between">
-              <span class="fw-bold">Payment:</span>
-              <span class="text-muted"><%= booking.paymentMethod %></span>
-            </div>
-            <% } %>
-            <div class="d-flex justify-content-between">
-              <span class="fw-bold">Booked At:</span>
-              <span class="text-muted">
-                <%= new Date(booking.createdAt).toLocaleString('en-US') %>
-              </span>
-            </div>
+</div>
+
+              <div class="price-display mb-4">
+                <p class="fw-bold fs-5">Total: <span id="totalPrice">$<%= concert.ticketPrice.toFixed(2) %></span></p>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100 py-2">
+                <i class="fas fa-credit-card me-2"></i> Confirm Booking
+              </button>
+            </form>
           </div>
         </div>
-        <div class="card-footer bg-white border-0"></div>
       </div>
     </div>
-    <% }); %>
-  </div>
-  <% } %>
-</main>
+  </main>
 
+  <%- include('../partials/footer') %>
 
-
-
-    <!-- Footer -->
-    <footer
-      class="bg-dark text-white py-3 mt-auto"
-      style="width: 100vw; margin-left: calc(-50vw + 50%)"
-    >
-      <div class="container-fluid px-0">
-        <div class="text-center px-4">
-          <p class="mb-0">
-            &copy; <span id="current-year"></span> ConcertHub. All rights
-            reserved.
-          </p>
-          <div class="mt-2">
-            <a
-              href="/about"
-              class="text-white-50 mx-2 text-decoration-none hover-underline"
-              >About Us</a
-            >
-            <a
-              href="/contact"
-              class="text-white-50 mx-2 text-decoration-none hover-underline"
-              >Contact</a
-            >
-            <a
-              href="/privacy"
-              class="text-white-50 mx-2 text-decoration-none hover-underline"
-              >Privacy Policy</a
-            >
-            <a
-              href="/terms"
-              class="text-white-50 mx-2 text-decoration-none hover-underline"
-              >Terms of Service</a
-            >
-          </div>
-        </div>
-      </div>
-    </footer>
-
-<script src="public/js/booking"></script>
-  </body>
+  <!-- JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/bookTicket.js"></script>
+</body>
 </html>
