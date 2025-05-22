@@ -1,0 +1,68 @@
+/* Concert Details Card */
+.concert-details-card {
+  border: none;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+.concert-main-image {
+  border-radius: 8px 8px 0 0;
+  max-height: 400px;
+  object-fit: cover;
+}
+
+/* Meta Grid Layout */
+.concert-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.meta-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.meta-item i {
+  font-size: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+/* Booking Card */
+.booking-card {
+  border: none;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+.ticket-counter {
+  margin-bottom: 1.5rem;
+}
+
+.price-display {
+  font-size: 1.2rem;
+  padding: 1rem 0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .concert-meta-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .booking-card {
+    margin-top: 2rem;
+  }
+}
+
+
+
+.is-invalid {
+    border-color: #dc3545;
+  }
+  .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+  }
+  .spinner-border {
+    vertical-align: middle;
+  }

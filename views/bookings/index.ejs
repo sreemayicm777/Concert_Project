@@ -1,266 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ConcertHub - <%= concert.name %>
-  </title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-  <link href="/css/concerts.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book <%= concert.name %> | ConcertHub</title>
+  <!-- CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="/css/concerts.css" rel="stylesheet">
+  <link href="/css/bookTicket.css" rel="stylesheet">
+  <!-- QR Code Library -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
-
 <body>
-  <!-- Header -->
-  <header class="bg-dark text-white sticky-top shadow-lg header" style="width: 100vw; margin-left: calc(-50vw + 50%)">
-    <div class="container-fluid px-0">
-      <div class="px-4 py-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <h1 class="m-0">
-            <a href="/" class="text-white text-decoration-none d-flex align-items-center">
-              <i class="fas fa-music me-2" style="font-size: 1.5rem; padding-left: 30px"></i>
-              <span class="fw-bold" style="
-                    font-family: 'Montserrat', sans-serif;
-                    letter-spacing: 1px;
-                  ">ConcertHub</span>
-            </a>
-          </h1>
+  <%- include('../partials/header') %>
 
-          <div class="d-flex align-items-center">
-            <div class="navbar-nav">
-              <% if (user) { %>
-                <div class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
-                    data-bs-toggle="dropdown" style="cursor: pointer; padding-right: 50px">
-                    <div class="avatar me-2" style="
-                        width: 32px;
-                        height: 32px;
-                        background-color: #6c757d;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                      ">
-                      <span class="text-white">
-                        <%= user.username.charAt(0).toUpperCase() %>
-                      </span>
-                    </div>
-                    <span class="me-1" style="padding-right: 10px">
-                      <%= user.username %>
-                        <% if (user.role==='admin' ) { %>
-                          <span class="badge bg-primary ms-1">Admin</span>
-                          <% } else { %><span class="badge bg-secondary ms-1">
-                              <%= user.username %>
-                            </span>
-                            <%} %>
-                    </span>
-                  </a>
-                  <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li>
-                      <a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i> Profile</a>
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="/settings"><i class="fas fa-cog me-2"></i> Settings</a>
-                    </li>
-                    <% if (user.role==='admin' ) { %>
-                      <li>
-                        <hr class="dropdown-divider" />
-                      </li>
-                      <li>
-                        <a class="dropdown-item text-danger" href="/admin"><i class="fas fa-lock me-2"></i> Admin
-                          Panel</a>
-                      </li>
-                      <% } %>
-                        <li>
-                          <hr class="dropdown-divider" />
-                        </li>
-                        <li>
-                          <a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
-                        </li>
-                  </ul>
-                </div>
-                <% } else { %>
-                  <div class="d-flex">
-                    <a href="/login" class="btn btn-outline-light me-2 hover-scale">
-                      <i class="fas fa-sign-in-alt me-1"></i> Login
-                    </a>
-                    <a href="/register" class="btn btn-success hover-scale">
-                      <i class="fas fa-user-plus me-1"></i> Register
-                    </a>
-                  </div>
-                  <% } %>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Content -->
-  <main class="container py-5">
+  <main class="container my-5">
     <div class="row">
+      <!-- Concert Details Column -->
       <div class="col-md-6">
-        <div class="card concert-card mb-4">
-          <img src="<%= concert.image || '/images/default-concert.jpg' %>" class="concert-img"
-            alt="<%= concert.name %>" />
+        <div class="concert-details-card card mb-4">
+          <!-- Concert Image with Badge -->
+          <div class="position-relative">
+            <img src="<%= concert.image || '/images/default-concert.jpg' %>" 
+                 class="card-img-top concert-main-image" 
+                 alt="<%= concert.name %>">
+            <% if (concert.availableTickets < 10) { %>
+              <span class="position-absolute top-0 end-0 badge bg-warning text-dark m-2">
+                <%= concert.availableTickets %> tickets left!
+              </span>
+            <% } %>
+          </div>
+
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <h5 class="card-title fw-bold">
-                <%= concert.name %>
-              </h5>
-              <% if (concert.status) { %>
-                <span class="badge bg-success">
-                  <%= concert.status %>
-                </span>
-                <% } %>
-            </div>
-            <p class="card-text text-muted">
-              <i class="fas fa-map-marker-alt me-2"></i>
-              <%= concert.venue %>
-            </p>
-            <div class="d-flex justify-content-between mb-3">
-              <span class="text-muted">
-                <i class="fas fa-calendar-day me-1"></i>
-                <% if (concert.date) { %>
-                  <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'short' , month: 'short' ,
-                    day: 'numeric' , year: 'numeric' }) %>
-                    <% } %>
-              </span>
-              <span class="text-muted">
-                <i class="fas fa-clock me-1"></i>
-                <%= concert.time %>
-              </span>
-            </div>
-            <div class="ticket-info mb-3">
-              <div class="d-flex justify-content-between">
-                <span class="fw-bold">Price:</span>
-                <span class="text-success fw-bold">
-                  $<%= concert.ticketPrice?.toFixed(2) || '0.00' %>
-                </span>
+            <h1 class="card-title display-6 mb-3">
+              <%= concert.name %>
+              <% if (concert.artist) { %>
+                <small class="text-muted d-block mt-1">by <%= concert.artist %></small>
+              <% } %>
+            </h1>
+
+            <div class="concert-meta-grid mb-4">
+              <div class="meta-item">
+                <i class="fas fa-calendar-day text-primary"></i>
+                <div>
+                  <strong>Date</strong>
+                  <p><%= concert.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) %></p>
+                </div>
+              </div>
+              
+              <div class="meta-item">
+                <i class="fas fa-clock text-primary"></i>
+                <div>
+                  <strong>Time</strong>
+                  <p><%= concert.time %></p>
+                </div>
+              </div>
+              
+              <div class="meta-item">
+                <i class="fas fa-map-marker-alt text-primary"></i>
+                <div>
+                  <strong>Venue</strong>
+                  <p><%= concert.venue %></p>
+                  <% if (concert.city) { %>
+                    <small class="text-muted"><%= concert.city %>, <%= concert.country || '' %></small>
+                  <% } %>
+                </div>
+              </div>
+              
+              <div class="meta-item">
+                <i class="fas fa-tag text-primary"></i>
+                <div>
+                  <strong>Price</strong>
+                  <p>$<%= concert.ticketPrice.toFixed(2) %> per ticket</p>
+                </div>
               </div>
             </div>
-            <div class="d-flex justify-content-between">
-              <span class="fw-bold">Available Tickets:</span>
-              <span class="text-success fw-bold">
-                <%= concert.availableTickets || 0 %>
-              </span>
+
+            <div class="concert-description mb-4">
+              <h5 class="d-flex justify-content-between align-items-center">
+                About the Event
+                <button class="btn btn-sm btn-outline-primary toggle-description" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#descriptionCollapse">
+                  Show More
+                </button>
+              </h5>
+              <div class="collapse" id="descriptionCollapse">
+                <p class="mt-2"><%= concert.description || 'No additional details available.' %></p>
+              </div>
             </div>
-            <div class="d-flex justify-content-between">
-              <span class="fw-bold">Total Tickets:</span>
-              <span class="text-success fw-bold">
-                <%= concert.totalTickets || 0 %>
-              </span>
+
+            <div class="additional-details">
+              <% if (concert.genre) { %>
+                <span class="badge bg-light text-dark me-2 mb-2">
+                  <i class="fas fa-music me-1"></i> <%= concert.genre %>
+                </span>
+              <% } %>
+              
+              <% if (concert.duration) { %>
+                <span class="badge bg-light text-dark me-2 mb-2">
+                  <i class="fas fa-hourglass-half me-1"></i> <%= concert.duration %> mins
+                </span>
+              <% } %>
+              
+              <% if (concert.ageRestriction) { %>
+                <span class="badge bg-light text-dark me-2 mb-2">
+                  <i class="fas fa-user me-1"></i> <%= concert.ageRestriction %>+
+                </span>
+              <% } %>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Booking Form Column -->
       <div class="col-md-6">
         <div class="card booking-card">
           <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Book Tickets</h5>
+            <h4 class="mb-0">Book Tickets</h4>
           </div>
           <div class="card-body">
-            <% if (user) { %>
-              <form action="/bookings/<%= concert._id %>" method="POST">
-                <input type="hidden" name="concertId" value="<%= concert._id %>">
-                <input type="hidden" name="userId" value="<%= user._id %>">
+            <form id="bookingForm">
+              <input type="hidden" name="concertId" value="<%= concert._id %>">
+              
+              <div class="ticket-counter mb-3">
+  <label for="tickets" class="form-label">Tickets:</label>
+  
+  <input 
+    type="number" 
+    id="tickets" 
+    class="form-control" 
+    name="ticketCount" 
+    min="1" 
+    max="<%= concert.availableTickets %>"
+    required
+    data-price="<%= concert.ticketPrice %>"
+    data-available="<%= concert.availableTickets %>"
+    placeholder="Enter number of tickets"
+  >
+  <div id="ticket-error" class="alert alert-danger mt-2" style="display: none;">
+    <i class="fas fa-exclamation-triangle"></i>
+    You can only book a maximum of 3 tickets per order.
+  </div>
+  <label for="paymentMethod" class="form-label">Payment Method:</label>
+  <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+    <option value="" selected disabled>Select payment method</option>
+    <option value="credit_card">Credit Card</option>
+    <option value="paypal">PayPal</option>
+    <option value="bank_transfer">Bank Transfer</option>
+    <option value="crypto">Cryptocurrency</option>
+  </select>
+</div>
 
-                <div class="mb-3">
-                  <label for="name" class="form-label">Full Name</label>
-                  <input type="text" class="form-control" id="name" name="name" value="<%= user.name || '' %>" required>
-                </div>
+              <div class="price-display mb-4">
+               <!-- Add these right after the opening <main> tag -->
+<div id="error-message" class="alert alert-danger mb-4" style="display: none;"></div>
+<div id="success-message" class="alert alert-success mb-4" style="display: none;"></div> 
+                <p class="fw-bold fs-5">Total: <span id="totalPrice">$<%= concert.ticketPrice.toFixed(2) %></span></p>
+              </div>
 
-                <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
-                  <input type="email" class="form-control" id="email" name="email" value="<%= user.email || '' %>"
-                    required>
-                </div>
-
-                <div class="mb-3">
-                  <label for="phone" class="form-label">Phone Number</label>
-                  <input type="tel" class="form-control" id="phone" name="phone" required>
-                </div>
-
-                <div class="mb-3">
-                  <label for="ticketQuantity" class="form-label">Number of Tickets</label>
-                  <select class="form-select" id="ticketQuantity" name="ticketQuantity" required
-                    onchange="updateTotalPrice()">
-                    <% for (let i=1; i <=Math.min(10, concert.availableTickets || 0); i++) { %>
-                      <option value="<%= i %>">
-                        <%= i %>
-                      </option>
-                      <% } %>
-                  </select>
-                </div>
-
-                <!-- price -->
-                <div class="mb-3">
-                  <label for="totalPrice" class="form-label">Total Price</label>
-                  <input type="text" class="form-control" id="totalPrice" name="totalPrice"
-                    value="$<%= (concert.ticketPrice * 1)?.toFixed(2) || '0.00' %>" readonly>
-                </div>
-
-
-                <div class="mb-3">
-                  <label for="paymentMethod" class="form-label">Payment Method</label>
-                  <select class="form-select" id="paymentMethod" name="paymentMethod" required>
-                    <option value="credit">Credit Card</option>
-                    <option value="debit">Debit Card</option>
-                    <option value="paypal">PayPal</option>
-                  </select>
-                </div>
-
-                <div class="d-grid gap-2">
-                  <button type="submit" class="btn btn-success btn-lg">
-                    <i class="fas fa-ticket-alt me-2"></i> Confirm Booking
-                  </button>
-                </div>
-              </form>
-              <% } else { %>
-                <div class="alert alert-warning">
-                  <h5 class="alert-heading">Please log in to book tickets</h5>
-                  <p>You need to be logged in to make a booking for this concert.</p>
-                  <hr>
-                  <div class="d-flex justify-content-between">
-                    <a href="/login" class="btn btn-outline-primary">Login</a>
-                    <a href="/register" class="btn btn-primary">Register</a>
-                  </div>
-                </div>
-                <% } %>
+              <button type="button" id="confirmBookingBtn" class="btn btn-primary w-100 py-2">
+  <i class="fas fa-credit-card me-2"></i> Confirm Booking
+</button>
+            </form>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-dark text-white py-3 mt-auto" style="width: 100vw; margin-left: calc(-50vw + 50%)">
-    <div class="container-fluid px-0">
-      <div class="text-center px-4">
-        <p class="mb-0">
-          &copy; <span id="current-year"></span> ConcertHub. All rights
-          reserved.
-        </p>
-        <div class="mt-2">
-          <a href="/about" class="text-white-50 mx-2 text-decoration-none hover-underline">About Us</a>
-          <a href="/contact" class="text-white-50 mx-2 text-decoration-none hover-underline">Contact</a>
-          <a href="/privacy" class="text-white-50 mx-2 text-decoration-none hover-underline">Privacy Policy</a>
-          <a href="/terms" class="text-white-50 mx-2 text-decoration-none hover-underline">Terms of Service</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-<script>
-  function updateTotalPrice() {
-    const ticketQuantity = document.getElementById('ticketQuantity').value;
-    const ticketPrice = <%= concert.ticketPrice || 0 %>;
-    const totalPrice = ticketQuantity * ticketPrice;
-    document.getElementById('totalPrice').value = '$' + totalPrice.toFixed(2);
-  }
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+  <%- include('../partials/footer') %>
 
+  <!-- JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/bookTicket.js"></script>
+</body>
 </html>

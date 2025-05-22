@@ -3,171 +3,139 @@ require('dotenv').config();
 const Booking = require('../models/Booking');
 const Concert = require('../models/Concert');
 
+module.exports = {
+    // Get all concerts available for booking
+    getUserBookingConcert: async (req, res) => {
+        try {
+            const concerts = await Concert.find().sort({ date: 1 });
+            res.render('user/concert', { concerts });
+        } catch (err) {
+            res.render('error', { error: err.message });
+        }
+    },
 
-// Get all concerts for User
-exports.getUserBookingConcert = async (req, res) => {
-  try {
-    const concerts = await Concert.find().sort({ date: 1 });
-    res.render('user/concert', { concerts });
-  } catch (err) {
-    res.render('error', { error: err.message });
-  }
-};
+    // Get a specific concert by ID
+    getConcertById: async (req, res) => {
+        try {
+            const concert = await Concert.findById(req.params.concert_id);
+            if (!concert) {
+                req.flash('error', 'Concert not found');
+                return res.redirect('/concerts');
+            }
+            res.render('bookings/index', { concert });
+        } catch (err) {
+            req.flash('error', err.message);
+            res.redirect('/concerts');
+        }
+    },
 
+    //view all bookings
+    getAllBookings: async (req, res) => {
+        try {
+            const bookings = await Booking.find({ user: req.user._id }).populate('concert');
+            res.render('bookings/all', { bookings });
+        } catch (err) {
+            res.render('error', { error: err.message });
+        }
+    },
+    //view a specific booking by ID
+     getBookingById: async (req, res) => {
+        try {
+            const booking = await Booking.findById(req.params.booking_id)
+                .populate('concert')
+                .populate('user', 'name email');
+            
+            if (!booking || booking.user._id.toString() !== req.user._id.toString()) {
+                req.flash('error', 'Booking not found or unauthorized access');
+                return res.redirect('/bookings');
+            }
 
-// // // controllers/bookingController.js
-// exports.getUserBookings = async (req, res) => {
-//   try {
-//     const bookings = await Booking.find({ user: req.user._id })
-//       .populate('concert')
-//       .sort({ createdAt: -1 });
-//       console.log("bookings", bookings);
-      
+            console.debug('Booking Details:', {
+                id: booking._id,
+                concert: booking.concert.name,
+                tickets: booking.tickets,
+                status: booking.status,
+                user: booking.user.email
+            });
 
-//     res.render('bookings/index', { 
-//       bookings // Passing bookings instead of concerts
-//     });
-//   } catch (err) {
-//     console.error('Error fetching bookings:', err);
-//     res.status(500).render('error', {
-//       message: 'Failed to load your bookings',
-//       error: err
-//     });
-//   }
-// };
+            res.render('user/my-booking', { 
+                booking,
+                success: req.flash('success'),
+                error: req.flash('error')
+            });
+        } catch (err) {
+            console.error('Error fetching booking:', err);
+            req.flash('error', err.message);
+            res.redirect('/bookings');
+        }
+    },
 
-// Get Concert By Id
-
-// In your bookingController.js or concertController.js
-exports.getConcertById = async (req, res) => {
-  try {
-    const concert = await Concert.findById(req.params.concert_id);
-    if (!concert) {
-      req.flash('error', 'Concert not found');
-      return res.redirect('/concerts');
-    }
-    
-    res.render('bookings/index', { 
-      concert,
-      user: req.user,
-      razorpayKey: process.env.RAZORPAY_KEY_ID // Make sure this is included
-    });
-  } catch (err) {
-    console.error(err);
-    req.flash('error', 'Something went wrong');
-    res.redirect('/concerts');
-  }
-};
-
-
-// Initialize with fallback or error handling
-let razorpayInstance;
-try {
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-    throw new Error('Razorpay credentials not configured');
-  }
   
-  razorpayInstance = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-  });
-} catch (error) {
-  console.error('Payment initialization error:', error.message);
-  // Continue running in "payment disabled" mode if in development
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn('Running without payment functionality');
-    razorpayInstance = {
-      orders: {
-        create: () => Promise.reject('Payments disabled - missing credentials')
-      }
-    };
-  } else {
-    throw error; // Crash in production if credentials missing
-  }
-}
+    // Book tickets for a concert
+    bookTickets: async (req, res) => {
+        try {
+            const { concertId, tickets ,  paymentMethod } = req.body;
+            const userId = req.user._id;
+// Validation
+            if (!concertId || !tickets || isNaN(tickets) || tickets < 1 || !paymentMethod) {
+              
+                req.flash('error', 'Invalid booking request');
+                return res.redirect('bookings/index');
+            }
 
+            const booking = await Booking.createBooking(concertId, userId, parseInt(tickets), paymentMethod);
+            res.json({
+            success: true,
+            booking: {
+                _id: booking._id,
+                tickets: booking.tickets,
+                concert: {
+                    _id: booking.concert._id,
+                    name: booking.concert.name,
+                    date: booking.concert.date,
+                    venue: booking.concert.venue,
+                    ticketPrice: booking.concert.ticketPrice
+                },
+                user: booking.user._id
+            }
+        });
+            req.flash('success', `Successfully booked ${booking.tickets} tickets!`);
+            res.redirect('/bookings/${booking._id}');
+        } catch (err) {
+          console.error('Booking error:', err);
+        if (req.accepts('json')) {
+            return res.status(500).json({
+                success: false,
+                message: err.message
+            });
+        }
+            req.flash('error', err.message);
+            res.redirect('back');
+        }
+    },
 
-exports.bookTickets = async (req, res) => {
-  try {
-    const { concertId, name, email, phone, ticketQuantity, paymentMethod } = req.body;
-    const userId = req.user._id;
-    console.log('Booking request:', concertId, name, email, phone, ticketQuantity, paymentMethod);
-    // Validation checks
-    if (!concertId || !name || !email || !phone || !ticketQuantity) {
-      req.flash('error', 'Please fill all required fields');
-      return res.redirect('back');
+    // Cancel a booking
+    cancelBooking: async (req, res) => {
+        try {
+            const booking = await Booking.findById(req.params.id).populate('concert');
+            
+            if (!booking || booking.user.toString() !== req.user._id.toString()) {
+                throw new Error('Booking not found');
+            }
+
+            booking.status = 'cancelled';
+            await booking.save();
+
+            // Return tickets to concert availability
+            const concert = booking.concert;
+            concert.availableTickets += booking.tickets;
+            await concert.save();
+
+            req.flash('success', 'Booking cancelled successfully');
+            res.redirect('/bookings');
+        } catch (err) {
+            req.flash('error', err.message);
+            res.redirect('/bookings');
+        }
     }
-
-    const concert = await Concert.findById(concertId);
-    if (!concert) {
-      req.flash('error', 'Concert not found');
-      return res.redirect('back');
-    }
-
-    if (ticketQuantity > concert.availableTickets) {
-      req.flash('error', 'Not enough tickets available');
-      return res.redirect('back');
-    }
-
-    // Create booking
-    const booking = await Booking.create({
-      concert: concertId,
-      user: userId,
-      name,
-      email,
-      phone,
-      tickets: ticketQuantity,
-      paymentMethod,
-      totalAmount: concert.ticketPrice * ticketQuantity,
-      status: 'pending'
-    });
-
-    // For Razorpay payments
-    if (paymentMethod === 'razorpay') {
-      const order = await razorpayInstance.orders.create({
-        amount: booking.totalAmount * 100,
-        currency: 'INR',
-        receipt: `booking_${booking._id}`
-      });
-
-      return res.render('payment', {
-        booking,
-        order,
-        razorpayKey: process.env.RAZORPAY_KEY_ID
-      });
-    }
-
-    // For other payment methods
-    req.flash('success', 'Booking successful!');
-    res.redirect('/bookings');
-
-  } catch (err) {
-    console.error('Booking error:', err);
-    req.flash('error', err.message);
-    res.redirect('back');
-  }
-};
-
-exports.cancelBooking = async (req, res) => {
-  try {
-    const booking = await Booking.findById(req.params.id).populate('concert');
-    
-    if (!booking || booking.user.toString() !== req.user._id.toString()) {
-      throw new Error('Booking not found');
-    }
-
-    booking.status = 'cancelled';
-    await booking.save();
-
-    // Return tickets to concert availability
-    const concert = booking.concert;
-    concert.availableTickets += booking.tickets;
-    await concert.save();
-
-    req.flash('success', 'Booking cancelled successfully');
-    res.redirect('/bookings');
-  } catch (err) {
-    req.flash('error', err.message);
-    res.redirect('/bookings');
-  }
 };

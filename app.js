@@ -75,6 +75,7 @@ app.use('/concerts', concertRoutes);
 app.use('/bookings', bookingRoutes);
 app.use('/', authRoutes);
 
+
 // Home route
 app.get('/', (req, res) => {
   if (req.session.user) {
