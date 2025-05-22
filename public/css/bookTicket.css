@@ -53,3 +53,16 @@
     margin-top: 2rem;
   }
 }
+
+
+
+.is-invalid {
+    border-color: #dc3545;
+  }
+  .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+  }
+  .spinner-border {
+    vertical-align: middle;
+  }

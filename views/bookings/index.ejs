@@ -10,6 +10,8 @@
   <link href="/css/concerts.css" rel="stylesheet">
   <link href="/css/bookTicket.css" rel="stylesheet">
   <!-- QR Code Library -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
 <body>
@@ -144,15 +146,26 @@
     <i class="fas fa-exclamation-triangle"></i>
     You can only book a maximum of 3 tickets per order.
   </div>
+  <label for="paymentMethod" class="form-label">Payment Method:</label>
+  <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+    <option value="" selected disabled>Select payment method</option>
+    <option value="credit_card">Credit Card</option>
+    <option value="paypal">PayPal</option>
+    <option value="bank_transfer">Bank Transfer</option>
+    <option value="crypto">Cryptocurrency</option>
+  </select>
 </div>
 
               <div class="price-display mb-4">
+               <!-- Add these right after the opening <main> tag -->
+<div id="error-message" class="alert alert-danger mb-4" style="display: none;"></div>
+<div id="success-message" class="alert alert-success mb-4" style="display: none;"></div> 
                 <p class="fw-bold fs-5">Total: <span id="totalPrice">$<%= concert.ticketPrice.toFixed(2) %></span></p>
               </div>
 
-              <button type="submit" class="btn btn-primary w-100 py-2">
-                <i class="fas fa-credit-card me-2"></i> Confirm Booking
-              </button>
+              <button type="button" id="confirmBookingBtn" class="btn btn-primary w-100 py-2">
+  <i class="fas fa-credit-card me-2"></i> Confirm Booking
+</button>
             </form>
           </div>
         </div>

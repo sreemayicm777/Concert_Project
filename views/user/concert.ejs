@@ -1,23 +1,40 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 style="font-weight: bolder;">Concerts</h1>
+  <h1 style="font-weight: bolder">Concerts</h1>
   <div class="d-flex align-items-center gap-3">
     <!-- View My Bookings Button -->
-    <a href="/my-bookings" class="btn btn-success btn-animated position-relative">
+    <a
+      href="/my-bookings"
+      class="btn btn-success btn-animated position-relative"
+    >
       <i class="fas fa-ticket-alt me-2"></i>
       View My Bookings
-      <span class="booking-badge badge bg-light text-dark ms-2" id="booking-count" style="display: none;">0</span>
+      <span
+        class="booking-badge badge bg-light text-dark ms-2"
+        id="booking-count"
+        style="display: none"
+        >0</span
+      >
     </a>
-    
+
     <!-- Items Per Page Dropdown -->
     <div class="dropdown">
-      <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="itemsPerPageDropdown" data-bs-toggle="dropdown">
+      <button
+        class="btn btn-outline-secondary dropdown-toggle"
+        type="button"
+        id="itemsPerPageDropdown"
+        data-bs-toggle="dropdown"
+      >
         <i class="fas fa-list me-1"></i>
         Show: <span id="current-per-page">6</span>
       </button>
       <ul class="dropdown-menu">
         <li><a class="dropdown-item" href="#" data-value="6">6 per page</a></li>
-        <li><a class="dropdown-item" href="#" data-value="12">12 per page</a></li>
-        <li><a class="dropdown-item" href="#" data-value="24">24 per page</a></li>
+        <li>
+          <a class="dropdown-item" href="#" data-value="12">12 per page</a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="#" data-value="24">24 per page</a>
+        </li>
         <li><a class="dropdown-item" href="#" data-value="0">Show all</a></li>
       </ul>
     </div>
@@ -29,14 +46,24 @@
   <div class="col-md-6">
     <div class="input-group">
       <span class="input-group-text"><i class="fas fa-search"></i></span>
-      <input type="text" id="concert-search" class="form-control" placeholder="Search concerts...">
+      <input
+        type="text"
+        id="concert-search"
+        class="form-control"
+        placeholder="Search concerts..."
+      />
     </div>
   </div>
   <div class="col-md-6">
     <div class="input-group">
       <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-      <input type="date" id="date-filter" class="form-control">
-      <button class="btn btn-outline-secondary" type="button" id="clear-date" title="Clear date filter">
+      <input type="date" id="date-filter" class="form-control" />
+      <button
+        class="btn btn-outline-secondary"
+        type="button"
+        id="clear-date"
+        title="Clear date filter"
+      >
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -44,7 +71,11 @@
 </div>
 
 <!-- Results summary -->
-<div id="results-summary" class="d-flex justify-content-between align-items-center mb-3" style="display: none !important;">
+<div
+  id="results-summary"
+  class="d-flex justify-content-between align-items-center mb-3"
+  style="display: none !important"
+>
   <small class="text-muted">
     <span id="results-count"></span>
   </small>
@@ -54,93 +85,103 @@
 </div>
 
 <!-- No results message (hidden by default) -->
-<div id="no-results" class="alert alert-info text-center" style="display: none;">
+<div id="no-results" class="alert alert-info text-center" style="display: none">
   <i class="fas fa-info-circle me-2"></i>
   No concerts found matching your search criteria.
-  <button class="btn btn-link btn-sm ms-2" id="clear-filters">Clear all filters</button>
+  <button class="btn btn-link btn-sm ms-2" id="clear-filters">
+    Clear all filters
+  </button>
 </div>
 
 <% if (concerts.length === 0) { %>
-  <div class="empty-state alert alert-info py-5">
-    <i class="fas fa-music"></i>
-    <h3>No concerts found</h3>
-    <p class="mb-0">Add your first concert or check back later for updates!</p>
-  </div>
+<div class="empty-state alert alert-info py-5">
+  <i class="fas fa-music"></i>
+  <h3>No concerts found</h3>
+  <p class="mb-0">Add your first concert or check back later for updates!</p>
+</div>
 <% } else { %>
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="concerts-container">
-    <% concerts.forEach(concert => { %>
-      <div class="col concert-card" 
-           data-title="<%= concert.name.toLowerCase() %>" 
-           data-venue="<%= concert.venue.toLowerCase() %>"
-           data-date="<%= concert.date.toISOString().split('T')[0] %>"
-           data-price="<%= concert.ticketPrice %>">
-        <div class="card h-100 shadow-sm concert-item">
-          <img src="<%= concert.image %>"
-               class="card-img-top"
-               alt="<%= concert.name %>"
-               onerror="this.onerror=null;this.src='/images/default-concert.jpg'">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title"><%= concert.name %></h5>
-            <p class="card-text mb-1">
-              <i class="fas fa-calendar-day me-1"></i>
-              <%= concert.date.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              }) %>
-            </p>
-            <p class="card-text mb-1">
-              <i class="fas fa-clock me-1"></i> <%= concert.time %>
-            </p>
-            <p class="card-text mb-1">
-              <i class="fas fa-map-marker-alt me-1"></i> <%= concert.venue %>
-            </p>
-            <div class="ticket-info mb-3">
-              <p class="card-text mb-0">
-                <i class="fas fa-ticket-alt me-1"></i>
-                $<%= concert.ticketPrice.toFixed(2) %> |
-                <span class="<%= concert.availableTickets < 20 ? 'text-danger' : '' %>">
-                  <%= concert.availableTickets %> available
-                </span>
-              </p>
-            </div>
-            <div class="mt-auto">
-              <a href="/bookings/<%= concert._id %>" class="btn btn-primary w-100 btn-book">
-                <i class="fas fa-ticket-alt me-1"></i> Book Now
-              </a>  
-            </div>
-          </div>
+<div
+  class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"
+  id="concerts-container"
+>
+  <% concerts.forEach(concert => { %>
+  <div
+    class="col concert-card"
+    data-title="<%= concert.name.toLowerCase() %>"
+    data-venue="<%= concert.venue.toLowerCase() %>"
+    data-date="<%= concert.date.toISOString().split('T')[0] %>"
+    data-price="<%= concert.ticketPrice %>"
+  >
+    <div class="card h-100 shadow-sm concert-item">
+      <img
+        src="<%= concert.image %>"
+        class="card-img-top"
+        alt="<%= concert.name %>"
+        onerror="this.onerror=null;this.src='/images/default-concert.jpg'"
+      />
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title"><%= concert.name %></h5>
+        <p class="card-text mb-1">
+          <i class="fas fa-calendar-day me-1"></i>
+          <%= concert.date.toLocaleDateString('en-US', { weekday: 'short',
+          month: 'short', day: 'numeric', year: 'numeric' }) %>
+        </p>
+        <p class="card-text mb-1">
+          <i class="fas fa-clock me-1"></i> <%= concert.time %>
+        </p>
+        <p class="card-text mb-1">
+          <i class="fas fa-map-marker-alt me-1"></i> <%= concert.venue %>
+        </p>
+        <div class="ticket-info mb-3">
+          <p class="card-text mb-0">
+            <i class="fas fa-ticket-alt me-1"></i>
+            $<%= concert.ticketPrice.toFixed(2) %> |
+            <span
+              class="<%= concert.availableTickets < 20 ? 'text-danger' : '' %>"
+            >
+              <%= concert.availableTickets %> available
+            </span>
+          </p>
+        </div>
+        <div class="mt-auto">
+          <a
+            href="/bookings/<%= concert._id %>"
+            class="btn btn-primary w-100 btn-book"
+          >
+            <i class="fas fa-ticket-alt me-1"></i> Book Now
+          </a>
         </div>
       </div>
-    <% }); %>
-  </div>
-
-  <!-- Pagination Controls -->
-  <div id="pagination-container" class="mt-5">
-    <!-- Show More Button (Alternative to pagination) -->
-    <div id="show-more-container" class="text-center mb-4" style="display: none;">
-      <button id="show-more-btn" class="btn btn-outline-primary btn-lg">
-        <i class="fas fa-chevron-down me-2"></i>
-        Show More Concerts
-        <span class="badge bg-primary ms-2" id="remaining-count"></span>
-      </button>
     </div>
-
-    <!-- Traditional Pagination -->
-    <nav aria-label="Concert pagination" id="pagination-nav">
-      <ul class="pagination justify-content-center" id="pagination-list">
-        <!-- Pagination will be generated by JavaScript -->
-      </ul>
-    </nav>
-
-    <!-- Pagination Info -->
-    <p class="text-center text-muted mt-2" id="pagination-info">
-      <!-- Page info will be updated by JavaScript -->
-    </p>
   </div>
+  <% }); %>
+</div>
+
+<!-- Pagination Controls -->
+<div id="pagination-container" class="mt-5">
+  <!-- Show More Button (Alternative to pagination) -->
+  <div id="show-more-container" class="text-center mb-4" style="display: none">
+    <button id="show-more-btn" class="btn btn-outline-primary btn-lg">
+      <i class="fas fa-chevron-down me-2"></i>
+      Show More Concerts
+      <span class="badge bg-primary ms-2" id="remaining-count"></span>
+    </button>
+  </div>
+
+  <!-- Traditional Pagination -->
+  <nav aria-label="Concert pagination" id="pagination-nav">
+    <ul class="pagination justify-content-center" id="pagination-list">
+      <!-- Pagination will be generated by JavaScript -->
+    </ul>
+  </nav>
+
+  <!-- Pagination Info -->
+  <p class="text-center text-muted mt-2" id="pagination-info">
+    <!-- Page info will be updated by JavaScript -->
+  </p>
+</div>
 <% } %>
 
 <!-- Include the CSS and JS files -->
-<link rel="stylesheet" href="/css/booking.css">
+<link rel="stylesheet" href="/css/booking.css" />
 <script src="/js/booking.js"></script>

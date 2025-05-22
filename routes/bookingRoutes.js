@@ -3,23 +3,47 @@ const router = express.Router();
 const bookingController = require('../controllers/bookingController');
 const { isLoggedIn, isUser } = require('../middleware/auth');
 
+//      Booking Routes
 
+// View all concerts
+router.get(
+    '/',
+    isLoggedIn,
+    isUser,
+    bookingController.getUserBookingConcert
+);
 
-// View user bookings
-router.get('/', isLoggedIn, isUser, bookingController.getUserBookingConcert);
-router.get('/:concert_id', isLoggedIn, isUser, bookingController.getConcertById);
-// Book tickets
-router.post('/', isLoggedIn, isUser, bookingController.bookTickets);
+// View specific concert
+router.get(
+    '/:concert_id',
+    isLoggedIn,
+    isUser,
+    bookingController.getConcertById
+);
+
+// Create booking
+router.post(
+    '/bookings',
+    isLoggedIn,
+    isUser,
+    bookingController.bookTickets
+);
+
 // Cancel booking
-router.post('/:id/cancel', isLoggedIn, isUser, bookingController.cancelBooking);
-router.get('/concerts', isLoggedIn, isUser, bookingController.getUserBookingConcert);
+router.post(
+    '/:id/cancel',
+    isLoggedIn,
+    isUser,
+    bookingController.cancelBooking
+);
 
-// routes/index.js
+// Debug route
 router.get('/debug', (req, res) => {
-  console.log('Session data:', req.session);
-  res.json({
-    session: req.session,
-    user: req.session.user
-  });
+    console.log('Session data:', req.session);
+    res.json({
+        session: req.session,
+        user: req.session.user
+    });
 });
+
 module.exports = router;

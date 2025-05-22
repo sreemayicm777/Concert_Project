@@ -17,6 +17,21 @@ const bookingSchema = new mongoose.Schema({
     min: 1,
     max: 10
   },
+  paymentMethod: {
+    type: String,
+    required: true,
+    enum: ['credit_card', 'paypal', 'bank_transfer', 'crypto'],
+    default: 'credit_card'
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'completed', 'failed', 'refunded'],
+    default: 'pending'
+  },
+  transactionId: {
+    type: String,
+    default: null
+  },
   bookedAt: {
     type: Date,
     default: Date.now
@@ -29,7 +44,7 @@ const bookingSchema = new mongoose.Schema({
 });
 
 // Static method to handle ticket booking
-bookingSchema.statics.createBooking = async function(concertId, userId, ticketCount) {
+bookingSchema.statics.createBooking = async function(concertId, userId, ticketCount, paymentMethod) {
   const Concert = require('./Concert');
   
   // Check concert availability
@@ -59,7 +74,9 @@ bookingSchema.statics.createBooking = async function(concertId, userId, ticketCo
   const booking = await this.create({
     concert: concertId,
     user: userId,
-    tickets: ticketCount
+    tickets: ticketCount,
+    paymentMethod: paymentMethod,
+    paymentStatus: 'completed'
   });
 
   // Update concert availability
