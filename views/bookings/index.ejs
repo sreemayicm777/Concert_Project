@@ -9,11 +9,9 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="/css/concerts.css" rel="stylesheet">
   <link href="/css/bookTicket.css" rel="stylesheet">
-  <!-- QR Code Library -->
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <!-- PDF Generation Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
   <%- include('../partials/header') %>
@@ -27,7 +25,8 @@
           <div class="position-relative">
             <img src="<%= concert.image || '/images/default-concert.jpg' %>" 
                  class="card-img-top concert-main-image" 
-                 alt="<%= concert.name %>">
+                 alt="<%= concert.name %>"
+                 id="concertImage">
             <% if (concert.availableTickets < 10) { %>
               <span class="position-absolute top-0 end-0 badge bg-warning text-dark m-2">
                 <%= concert.availableTickets %> tickets left!
@@ -129,45 +128,49 @@
               <input type="hidden" name="concertId" value="<%= concert._id %>">
               
               <div class="ticket-counter mb-3">
-  <label for="tickets" class="form-label">Tickets:</label>
-  
-  <input 
-    type="number" 
-    id="tickets" 
-    class="form-control" 
-    name="ticketCount" 
-    min="1" 
-    max="<%= concert.availableTickets %>"
-    required
-    data-price="<%= concert.ticketPrice %>"
-    data-available="<%= concert.availableTickets %>"
-    placeholder="Enter number of tickets"
-  >
-  <div id="ticket-error" class="alert alert-danger mt-2" style="display: none;">
-    <i class="fas fa-exclamation-triangle"></i>
-    You can only book a maximum of 3 tickets per order.
-  </div>
-  <label for="paymentMethod" class="form-label">Payment Method:</label>
-  <select class="form-select" id="paymentMethod" name="paymentMethod" required>
-    <option value="" selected disabled>Select payment method</option>
-    <option value="credit_card">Credit Card</option>
-    <option value="paypal">PayPal</option>
-    <option value="bank_transfer">Bank Transfer</option>
-    <option value="crypto">Cryptocurrency</option>
-  </select>
-</div>
+                <label for="tickets" class="form-label">Tickets:</label>
+                
+                <input 
+                  type="number" 
+                  id="tickets" 
+                  class="form-control" 
+                  name="ticketCount" 
+                  min="1" 
+                  max="<%= concert.availableTickets %>"
+                  required
+                  data-price="<%= concert.ticketPrice %>"
+                  data-available="<%= concert.availableTickets %>"
+                  placeholder="Enter number of tickets"
+                >
+                <div id="ticket-error" class="alert alert-danger mt-2" style="display: none;">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  You can only book a maximum of 3 tickets per order.
+                </div>
+                
+                <label for="paymentMethod" class="form-label mt-3">Payment Method:</label>
+                <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                  <option value="" selected disabled>Select payment method</option>
+                  <option value="credit_card">Credit Card</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="crypto">Cryptocurrency</option>
+                </select>
+              </div>
 
               <div class="price-display mb-4">
-               <!-- Add these right after the opening <main> tag -->
-<div id="error-message" class="alert alert-danger mb-4" style="display: none;"></div>
-<div id="success-message" class="alert alert-success mb-4" style="display: none;"></div> 
+                <div id="error-message" class="alert alert-danger mb-4" style="display: none;"></div>
+                <div id="success-message" class="alert alert-success mb-4" style="display: none;"></div> 
                 <p class="fw-bold fs-5">Total: <span id="totalPrice">$<%= concert.ticketPrice.toFixed(2) %></span></p>
               </div>
 
-              <button type="button" id="confirmBookingBtn" class="btn btn-primary w-100 py-2">
-                
-  <i class="fas fa-credit-card me-2"></i> Confirm Booking
-</button>
+              <button type="button" id="confirmBookingBtn" class="btn btn-primary w-100 py-2 mb-3">
+                <i class="fas fa-credit-card me-2"></i> Confirm Booking
+              </button>
+              
+              <!-- PDF Download Button (initially hidden) -->
+              <button type="button" id="downloadPdfBtn" class="btn btn-success w-100 py-2" style="display: none;">
+                <i class="fas fa-download me-2"></i> Download Ticket PDF
+              </button>
             </form>
           </div>
         </div>
@@ -177,8 +180,30 @@
 
   <%- include('../partials/footer') %>
 
+  <!-- Hidden concert data for JavaScript -->
+  <script type="application/json" id="concertData">
+    {
+      "id": "<%= concert._id %>",
+      "name": "<%= concert.name %>",
+      "artist": "<%= concert.artist || '' %>",
+      "date": "<%= concert.date.toISOString() %>",
+      "time": "<%= concert.time %>",
+      "venue": "<%= concert.venue %>",
+      "city": "<%= concert.city || '' %>",
+      "country": "<%= concert.country || '' %>",
+      "price": <%= concert.ticketPrice %>,
+      "genre": "<%= concert.genre || '' %>",
+      "duration": "<%= concert.duration || '' %>",
+      "ageRestriction": "<%= concert.ageRestriction || '' %>",
+      "description": "<%= concert.description || '' %>",
+      "image": "<%= concert.image || '/images/default-concert.jpg' %>"
+    }
+  </script>
+
   <!-- JavaScript Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/js/bookTicket.js"></script>
+  <script src="/js/pdfGenerator.js"></script>
+  <script src="/js/qrCodeUtils.js"></script>
 </body>
 </html>

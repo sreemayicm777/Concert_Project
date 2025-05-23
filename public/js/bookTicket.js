@@ -1,322 +1,148 @@
-// bookTicket.js - PDF Generation with QR Code for Concert Tickets
-
+// bookTicket.js - Updated to work with PDF generation
 document.addEventListener('DOMContentLoaded', function() {
-    // DOM elements
     const ticketsInput = document.getElementById('tickets');
     const totalPriceSpan = document.getElementById('totalPrice');
     const confirmBookingBtn = document.getElementById('confirmBookingBtn');
     const bookingForm = document.getElementById('bookingForm');
+    const ticketError = document.getElementById('ticket-error');
     const errorMessage = document.getElementById('error-message');
     const successMessage = document.getElementById('success-message');
-    const paymentMethodSelect = document.getElementById('paymentMethod');
 
-    // Get concert data from the page (you can also pass this from your EJS backend)
-    const concertData = {
-        name: document.querySelector('.card-title').textContent.trim(),
-        artist: document.querySelector('.text-muted')?.textContent.replace('by ', '').trim() || '',
-        date: document.querySelector('.meta-item:nth-child(1) p').textContent.trim(),
-        time: document.querySelector('.meta-item:nth-child(2) p').textContent.trim(),
-        venue: document.querySelector('.meta-item:nth-child(3) p').textContent.trim(),
-        city: document.querySelector('.meta-item:nth-child(3) small')?.textContent.trim() || '',
-        price: parseFloat(ticketsInput.dataset.price),
-        availableTickets: parseInt(ticketsInput.dataset.available),
-        genre: document.querySelector('.badge:nth-child(1)')?.textContent.replace(/.*\s/, '').trim() || '',
-        duration: document.querySelector('.badge:nth-child(2)')?.textContent.replace(/.*\s/, '').trim() || '',
-        ageRestriction: document.querySelector('.badge:nth-child(3)')?.textContent.replace(/.*\s/, '').trim() || ''
-    };
+    let ticketPrice = parseFloat(ticketsInput.getAttribute('data-price')) || 0;
+    let availableTickets = parseInt(ticketsInput.getAttribute('data-available')) || 0;
 
     // Update total price when ticket count changes
     ticketsInput.addEventListener('input', function() {
-        const ticketCount = parseInt(this.value) || 0;
-        const ticketPrice = concertData.price;
-        const maxTickets = Math.min(concertData.availableTickets, 3); // Max 3 tickets per order
+        const ticketCount = parseInt(this.value) || 1;
         
-        // Validation
+        // Validate ticket count
         if (ticketCount > 3) {
-            showError("You can only book a maximum of 3 tickets per order.");
-            this.value = 3;
+            ticketError.style.display = 'block';
+            confirmBookingBtn.disabled = true;
+            return;
+        } else {
+            ticketError.style.display = 'none';
+            confirmBookingBtn.disabled = false;
+        }
+
+        if (ticketCount > availableTickets) {
+            showError(`Only ${availableTickets} tickets are available.`);
+            confirmBookingBtn.disabled = true;
             return;
         }
-        
-        if (ticketCount > concertData.availableTickets) {
-            showError(`Only ${concertData.availableTickets} tickets are available.`);
-            this.value = concertData.availableTickets;
-            return;
-        }
-        
-        if (ticketCount < 1) {
-            this.value = 1;
-        }
-        
-        const total = Math.max(1, ticketCount) * ticketPrice;
-        totalPriceSpan.textContent = `$${total.toFixed(2)}`;
-        hideError();
+
+        const totalPrice = ticketCount * ticketPrice;
+        totalPriceSpan.textContent = `$${totalPrice.toFixed(2)}`;
     });
 
-    // Handle booking confirmation and PDF generation
+    // Handle booking confirmation
     confirmBookingBtn.addEventListener('click', function() {
-        const ticketCount = parseInt(ticketsInput.value);
-        const paymentMethod = paymentMethodSelect.value;
+        const formData = new FormData(bookingForm);
+        const ticketCount = parseInt(formData.get('ticketCount'));
+        const paymentMethod = formData.get('paymentMethod');
+        const concertId = formData.get('concertId');
 
         // Validation
         if (!ticketCount || ticketCount < 1) {
-            showError("Please select at least 1 ticket.");
+            showError('Please enter a valid number of tickets.');
             return;
         }
 
         if (ticketCount > 3) {
-            showError("You can only book a maximum of 3 tickets per order.");
-            return;
-        }
-
-        if (ticketCount > concertData.availableTickets) {
-            showError(`Only ${concertData.availableTickets} tickets are available.`);
+            showError('Maximum 3 tickets per booking.');
             return;
         }
 
         if (!paymentMethod) {
-            showError("Please select a payment method.");
+            showError('Please select a payment method.');
             return;
         }
 
-        // Show loading state
-        const originalText = this.innerHTML;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
-        this.disabled = true;
-
-        // Generate booking details
-        const bookingDetails = {
-            bookingId: generateBookingId(),
-            customerName: 'Guest Customer', // You can add customer name field if needed
-            customerEmail: 'customer@example.com', // You can add email field if needed
-            ticketCount: ticketCount,
-            paymentMethod: paymentMethod,
-            totalAmount: ticketCount * concertData.price,
-            bookingDate: new Date().toISOString()
-        };
-
-        // Simulate processing delay then generate PDF
-        setTimeout(() => {
-            try {
-                generateTicketPDF(bookingDetails);
-                showSuccess("Booking confirmed! Your ticket PDF has been generated and downloaded.");
-                
-                // Reset form
-                ticketsInput.value = 1;
-                paymentMethodSelect.value = '';
-                totalPriceSpan.textContent = `$${concertData.price.toFixed(2)}`;
-                
-            } catch (error) {
-                console.error('PDF generation error:', error);
-                showError("There was an error generating your ticket. Please try again.");
-            }
-            
-            // Reset button
-            this.innerHTML = originalText;
-            this.disabled = false;
-        }, 2000);
-    });
-
-    // Generate unique booking ID
-    function generateBookingId() {
-        const timestamp = Date.now().toString().slice(-8);
-        const random = Math.random().toString(36).substr(2, 4).toUpperCase();
-        return `BK${timestamp}${random}`;
-    }
-
-    // Generate QR code data
-    function generateQRData(bookingDetails) {
-        return JSON.stringify({
-            bookingId: bookingDetails.bookingId,
-            event: concertData.name,
-            artist: concertData.artist,
-            venue: concertData.venue,
-            date: concertData.date,
-            time: concertData.time,
-            tickets: bookingDetails.ticketCount,
-            customer: bookingDetails.customerName,
-            total: bookingDetails.totalAmount,
-            validUntil: concertData.date
-        });
-    }
-
-    // Generate PDF ticket
-    function generateTicketPDF(bookingDetails) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        // Colors
-        const primaryColor = [0, 123, 255]; // Bootstrap primary blue
-        const darkColor = [33, 37, 41];
-        const lightColor = [248, 249, 250];
-
-        // Add header with background
-        doc.setFillColor(...primaryColor);
-        doc.rect(0, 0, 210, 35, 'F');
-
-        // Title
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.text('CONCERT TICKET', 105, 15, { align: 'center' });
-        
-        doc.setFontSize(12);
-        doc.text('ConcertHub - Your Gateway to Amazing Events', 105, 25, { align: 'center' });
-
-        // Reset text color
-        doc.setTextColor(...darkColor);
-
-        // Concert title and artist
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text(concertData.name, 20, 55);
-
-        if (concertData.artist) {
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`by ${concertData.artist}`, 20, 65);
+        if (ticketCount > availableTickets) {
+            showError(`Only ${availableTickets} tickets are available.`);
+            return;
         }
 
-        // Create two columns for details
-        let yPos = 85;
-        const leftCol = 20;
-        const rightCol = 110;
-
-        // Left column - Event Details
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('EVENT INFORMATION', leftCol, yPos);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        
-        const eventDetails = [
-            `Date: ${concertData.date}`,
-            `Time: ${concertData.time}`,
-            `Venue: ${concertData.venue}`,
-            `Location: ${concertData.city}`,
-            `Genre: ${concertData.genre}`,
-            `Duration: ${concertData.duration}`,
-            `Age Restriction: ${concertData.ageRestriction}`
-        ];
-
-        eventDetails.forEach((detail, index) => {
-            if (detail.split(': ')[1]) { // Only show if value exists
-                doc.text(detail, leftCol, yPos + 10 + (index * 8));
-            }
+        // Simulate booking process
+        processBooking({
+            concertId,
+            ticketCount,
+            paymentMethod,
+            totalAmount: ticketCount * ticketPrice
         });
+    });
 
-        // Right column - Booking Details
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text('BOOKING INFORMATION', rightCol, yPos);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        
-        const bookingInfo = [
-            `Booking ID: ${bookingDetails.bookingId}`,
-            `Customer: ${bookingDetails.customerName}`,
-            `Email: ${bookingDetails.customerEmail}`,
-            `Number of Tickets: ${bookingDetails.ticketCount}`,
-            `Payment Method: ${bookingDetails.paymentMethod}`,
-            `Booking Date: ${new Date(bookingDetails.bookingDate).toLocaleDateString()}`,
-            `Total Amount: $${bookingDetails.totalAmount.toFixed(2)}`
-        ];
+    function processBooking(bookingData) {
+        // Show loading state
+        confirmBookingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+        confirmBookingBtn.disabled = true;
 
-        bookingInfo.forEach((info, index) => {
-            doc.text(info, rightCol, yPos + 10 + (index * 8));
-        });
-
-        // Add QR Code section
-        yPos = 160;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text('ENTRY QR CODE', leftCol, yPos);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.text('Present this QR code at the venue entrance', leftCol, yPos + 8);
-        doc.text('along with a valid photo ID for entry.', leftCol, yPos + 16);
-
-        // Generate QR code
-        const qrData = generateQRData(bookingDetails);
-        const canvas = document.createElement('canvas');
-        
-        // Create QR code
-        const qr = new QRCode(canvas, {
-            text: qrData,
-            width: 100,
-            height: 100,
-            colorDark: '#000000',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-        });
-
-        // Wait for QR code generation
+        // Simulate API call
         setTimeout(() => {
-            try {
-                const qrDataURL = canvas.toDataURL('image/png');
-                doc.addImage(qrDataURL, 'PNG', leftCol, yPos + 25, 40, 40);
-            } catch (error) {
-                console.warn('QR code generation failed, adding placeholder');
-                doc.setFillColor(200, 200, 200);
-                doc.rect(leftCol, yPos + 25, 40, 40, 'F');
-                doc.setTextColor(100, 100, 100);
-                doc.setFontSize(8);
-                doc.text('QR CODE', leftCol + 20, yPos + 47, { align: 'center' });
-                doc.setTextColor(...darkColor);
+            // Simulate successful booking
+            const bookingResult = {
+                success: true,
+                bookingId: generateBookingId(),
+                ticketCount: bookingData.ticketCount,
+                totalAmount: bookingData.totalAmount,
+                paymentMethod: bookingData.paymentMethod,
+                concertId: bookingData.concertId,
+                bookingDate: new Date().toISOString()
+            };
+
+            if (bookingResult.success) {
+                handleBookingSuccess(bookingResult);
+            } else {
+                handleBookingError('Booking failed. Please try again.');
             }
-
-            // Add important notes
-            yPos = 220;
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text('IMPORTANT NOTES:', leftCol, yPos);
-            
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            const notes = [
-                '• Arrive at least 30 minutes before the event starts',
-                '• This ticket is non-refundable and non-transferable',
-                '• Security checks may be conducted at the entrance',
-                '• Photography and recording may be restricted during the event',
-                '• Keep this ticket safe - lost tickets cannot be replaced'
-            ];
-
-            notes.forEach((note, index) => {
-                doc.text(note, leftCol, yPos + 10 + (index * 6));
-            });
-
-            // Footer
-            doc.setFillColor(...lightColor);
-            doc.rect(0, 270, 210, 27, 'F');
-            
-            doc.setTextColor(100, 100, 100);
-            doc.setFontSize(8);
-            doc.text('Thank you for choosing ConcertHub! For support: support@concerthub.com', 105, 280, { align: 'center' });
-            doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, 287, { align: 'center' });
-            doc.text(`Booking Reference: ${bookingDetails.bookingId}`, 105, 294, { align: 'center' });
-
-            // Add border
-            doc.setDrawColor(...primaryColor);
-            doc.setLineWidth(1);
-            doc.rect(5, 5, 200, 287);
-
-            // Save PDF
-            const fileName = `Concert_Ticket_${bookingDetails.bookingId}.pdf`;
-            doc.save(fileName);
-
-        }, 500); // Wait for QR code generation
+        }, 2000);
     }
 
-    // Utility functions
+    function handleBookingSuccess(bookingResult) {
+        // Reset button
+        confirmBookingBtn.innerHTML = '<i class="fas fa-check me-2"></i> Booking Confirmed!';
+        confirmBookingBtn.classList.remove('btn-primary');
+        confirmBookingBtn.classList.add('btn-success');
+
+        // Show success message
+        showSuccess(`Booking confirmed! Your booking ID is: ${bookingResult.bookingId}`);
+
+        // Disable form inputs
+        document.querySelectorAll('#bookingForm input, #bookingForm select').forEach(input => {
+            input.disabled = true;
+        });
+
+        // Trigger event for PDF generator
+        const bookingSuccessEvent = new CustomEvent('bookingSuccess', {
+            detail: bookingResult
+        });
+        document.dispatchEvent(bookingSuccessEvent);
+
+        // Update available tickets display
+        availableTickets -= bookingResult.ticketCount;
+        updateAvailableTicketsDisplay();
+    }
+
+    function handleBookingError(error) {
+        // Reset button
+        confirmBookingBtn.innerHTML = '<i class="fas fa-credit-card me-2"></i> Confirm Booking';
+        confirmBookingBtn.disabled = false;
+
+        showError(error);
+    }
+
+    function generateBookingId() {
+        const timestamp = Date.now().toString(36);
+        const randomStr = Math.random().toString(36).substring(2, 8);
+        return `CH${timestamp}${randomStr}`.toUpperCase();
+    }
+
     function showError(message) {
         errorMessage.textContent = message;
         errorMessage.style.display = 'block';
         successMessage.style.display = 'none';
         
-        // Auto hide after 5 seconds
+        // Auto-hide after 5 seconds
         setTimeout(() => {
             errorMessage.style.display = 'none';
         }, 5000);
@@ -326,18 +152,46 @@ document.addEventListener('DOMContentLoaded', function() {
         successMessage.textContent = message;
         successMessage.style.display = 'block';
         errorMessage.style.display = 'none';
+    }
+
+    function updateAvailableTicketsDisplay() {
+        // Update any available tickets display on the page
+        const availableTicketsElements = document.querySelectorAll('.available-tickets');
+        availableTicketsElements.forEach(element => {
+            element.textContent = availableTickets;
+        });
+
+        // Update max attribute of tickets input
+        ticketsInput.setAttribute('max', availableTickets);
+    }
+
+    // Handle payment method selection
+    document.getElementById('paymentMethod').addEventListener('change', function() {
+        const selectedMethod = this.value;
         
-        // Auto hide after 5 seconds
-        setTimeout(() => {
-            successMessage.style.display = 'none';
-        }, 5000);
-    }
+        // You can add specific handling for different payment methods here
+        switch(selectedMethod) {
+            case 'credit_card':
+                // Handle credit card selection
+                console.log('Credit card payment selected');
+                break;
+            case 'paypal':
+                // Handle PayPal selection
+                console.log('PayPal payment selected');
+                break;
+            case 'bank_transfer':
+                // Handle bank transfer selection
+                console.log('Bank transfer payment selected');
+                break;
+            case 'crypto':
+                // Handle cryptocurrency selection
+                console.log('Cryptocurrency payment selected');
+                break;
+        }
+    });
 
-    function hideError() {
-        errorMessage.style.display = 'none';
+    // Initialize default values
+    if (ticketsInput.value) {
+        ticketsInput.dispatchEvent(new Event('input'));
     }
-
-    // Initialize total price
-    const initialTickets = parseInt(ticketsInput.value) || 1;
-    totalPriceSpan.textContent = `$${(initialTickets * concertData.price).toFixed(2)}`;
 });

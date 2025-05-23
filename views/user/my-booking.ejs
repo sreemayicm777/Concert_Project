@@ -3,65 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bookings</title>
+    <title>My Booking - <%= booking.concert.name %></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <% include ../partials/header %>
-
     <div class="container mt-5">
-        <h1 class="mb-4">My Bookings</h1>
-
         <% if (success) { %>
             <div class="alert alert-success"><%= success %></div>
         <% } %>
+        
         <% if (error) { %>
             <div class="alert alert-danger"><%= error %></div>
         <% } %>
-
-        <% if (bookings.length > 0) { %>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Concert</th>
-                            <th>Date</th>
-                            <th>Tickets</th>
-                            <th>Status</th>
-                            <th>Booked At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% concerts.forEach(booking => { %>
-                            <tr>
-                                <td><%= concert.name %></td>
-                                <td><%= concert.date.toLocaleString() %></td>
-                                <td><%= tickets %></td>
-                                <td>
-                                    <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : 'danger' %>">
-                                        <%= concert.status %>
-                                    </span>
-                                </td>
-                                <td><%= concert.bookedAt.toLocaleString() %></td>
-                                <td>
-                                    <% if (concert.status === 'confirmed') { %>
-                                        <form action="/bookings/<%= concert._id %>/cancel" method="POST">
-                                            <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
-                                        </form>
-                                    <% } %>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Booking Details</h2>
             </div>
-        <% } else { %>
-            <div class="alert alert-info">You have no bookings yet.</div>
-        <% } %>
+            <div class="card-body">
+                <h3><%= booking.concert.name %></h3>
+                <p><strong>Date:</strong> <%= new Date(booking.concert.date).toLocaleString() %></p>
+                <p><strong>Venue:</strong> <%= booking.concert.venue %></p>
+                <p><strong>Tickets:</strong> <%= booking.tickets %></p>
+                <p><strong>Price per ticket:</strong> $<%= booking.concert.ticketPrice %></p>
+                <p><strong>Total:</strong> $<%= booking.concert.ticketPrice * booking.tickets %></p>
+                <p><strong>Status:</strong> <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : 'warning' %>">
+                    <%= booking.status.toUpperCase() %>
+                </span></p>
+                <p><strong>Booked on:</strong> <%= new Date(booking.bookedAt).toLocaleString() %></p>
+                
+                <% if (booking.status === 'confirmed') { %>
+                    <button class="btn btn-danger" id="cancelBooking">Cancel Booking</button>
+                <% } %>
+                
+                <a href="/my-tickets" class="btn btn-secondary">Back to My Tickets</a>
+            </div>
+        </div>
     </div>
 
-    <% include ../partials/footer %>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('cancelBooking')?.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to cancel this booking?')) {
+                const response = await fetch(`/bookings/<%= booking._id %>/cancel`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    alert(result.message || 'Cancellation failed');
+                }
+            }
+        });
+    </script>
 </body>
 </html>

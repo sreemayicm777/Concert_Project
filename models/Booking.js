@@ -86,4 +86,5 @@ bookingSchema.statics.createBooking = async function(concertId, userId, ticketCo
   return booking;
 };
 
+
 module.exports = mongoose.model('Booking', bookingSchema);
