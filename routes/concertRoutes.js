@@ -8,14 +8,14 @@ const { isLoggedIn, isAdmin } = require('../middleware/auth');
 
 // Get all concerts
 router.get('/', concertController.getAllConcerts);
+// Show new concert form
+router.get('/new', isLoggedIn, isAdmin, concertController.getNewForm);
 
 // Get single concert
 router.get('/:id', concertController.getConcert);
 
 //     Admin-Protected Routes
 
-// Show new concert form
-router.get('/new', isLoggedIn, isAdmin, concertController.getNewForm);
 
 // Create new concert
 router.post('/', isLoggedIn, isAdmin, upload.single('image'), concertController.createConcert);
