@@ -1,4 +1,4 @@
-// pdfGenerator.js
+// pdfGenerator.js - Fixed with proper error handling
 class TicketPDFGenerator {
     constructor() {
         this.bookingData = null;
@@ -7,11 +7,8 @@ class TicketPDFGenerator {
     }
 
     init() {
-        // Get concert data from the hidden script tag
-        const concertDataElement = document.getElementById('concertData');
-        if (concertDataElement) {
-            this.concertData = JSON.parse(concertDataElement.textContent);
-        }
+        // Get concert data from the hidden script tag or fetch from API
+        this.loadConcertData();
 
         // Listen for successful booking to enable PDF download
         document.addEventListener('bookingSuccess', (event) => {
@@ -20,15 +17,111 @@ class TicketPDFGenerator {
         });
 
         // Add event listener for PDF download button
-        document.getElementById('downloadPdfBtn').addEventListener('click', () => {
-            this.generatePDF();
-        });
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                this.generatePDF();
+            });
+        }
+    }
+
+    async loadConcertData() {
+        // Try to get from hidden script tag first
+        const concertDataElement = document.getElementById('concertData');
+        if (concertDataElement) {
+            try {
+                this.concertData = JSON.parse(concertDataElement.textContent);
+                return;
+            } catch (error) {
+                console.error('Error parsing concert data from script tag:', error);
+            }
+        }
+
+        // If not available, fetch from API
+        const concertId = this.getConcertIdFromUrl() || document.querySelector('[name="concertId"]')?.value;
+        if (concertId) {
+            await this.fetchConcertData(concertId);
+        }
+    }
+
+    async fetchConcertData(concertId) {
+        try {
+            const response = await fetch(`/api/concerts/${concertId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Expected JSON but received:', text.substring(0, 200));
+                throw new Error('Server did not return JSON response');
+            }
+
+            const result = await response.json();
+            this.concertData = result.data || result;
+        } catch (error) {
+            console.error('Error fetching concert data:', error);
+            // Fallback: try to get data from the page elements
+            this.extractConcertDataFromPage();
+        }
+    }
+
+    extractConcertDataFromPage() {
+        // Extract concert data from the visible page elements as fallback
+        try {
+            this.concertData = {
+                id: this.getConcertIdFromUrl() || 'unknown',
+                name: document.querySelector('h1')?.textContent || 'Unknown Concert',
+                artist: document.querySelector('.artist')?.textContent || '',
+                date: document.querySelector('[data-date]')?.textContent || 
+                      document.querySelector('.date')?.textContent || 
+                      new Date().toISOString().split('T')[0],
+                time: document.querySelector('[data-time]')?.textContent || 
+                      document.querySelector('.time')?.textContent || '20:00',
+                venue: document.querySelector('[data-venue]')?.textContent || 
+                       document.querySelector('.venue')?.textContent || 'Unknown Venue',
+                city: document.querySelector('[data-city]')?.textContent || 
+                      document.querySelector('.city')?.textContent || '',
+                country: document.querySelector('[data-country]')?.textContent || 
+                         document.querySelector('.country')?.textContent || '',
+                price: parseFloat(document.querySelector('[data-price]')?.textContent || 
+                                 document.querySelector('.price')?.textContent?.replace(/[^0-9.]/g, '') || '100'),
+                image: document.querySelector('img')?.src || ''
+            };
+            console.log('Extracted concert data from page:', this.concertData);
+        } catch (error) {
+            console.error('Error extracting concert data from page:', error);
+            // Absolute fallback
+            this.concertData = {
+                id: 'fallback',
+                name: 'Concert Event',
+                date: new Date().toISOString().split('T')[0],
+                time: '20:00',
+                venue: 'Concert Venue',
+                price: 100
+            };
+        }
+    }
+
+    getConcertIdFromUrl() {
+        const urlParts = window.location.pathname.split('/');
+        return urlParts[urlParts.length - 1];
     }
 
     showDownloadButton() {
         const downloadBtn = document.getElementById('downloadPdfBtn');
-        downloadBtn.style.display = 'block';
-        downloadBtn.scrollIntoView({ behavior: 'smooth' });
+        if (downloadBtn) {
+            downloadBtn.style.display = 'block';
+            downloadBtn.scrollIntoView({ behavior: 'smooth' });
+        }
     }
 
     async generatePDF() {
@@ -38,6 +131,81 @@ class TicketPDFGenerator {
         }
 
         try {
+            // Try server-side PDF generation first
+            const pdfData = await this.sendBookingDataToServer();
+            
+            if (pdfData && pdfData.pdf_url) {
+                this.downloadPDFFromServer(pdfData.pdf_url);
+            } else {
+                // Fallback to client-side PDF generation
+                await this.generateClientSidePDF();
+            }
+
+        } catch (error) {
+            console.error('Server PDF generation failed, using client-side fallback:', error);
+            // Fallback to client-side generation
+            await this.generateClientSidePDF();
+        }
+    }
+
+    async sendBookingDataToServer() {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                             document.querySelector('input[name="_token"]')?.value || '';
+
+            const response = await fetch('/api/generate-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    booking_id: this.bookingData.bookingId,
+                    concert_id: this.concertData.id,
+                    booking_data: this.bookingData,
+                    concert_data: this.concertData,
+                    pdf_type: 'ticket',
+                    format: 'A4'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Expected JSON but received:', text.substring(0, 200));
+                throw new Error('Server did not return JSON response for PDF generation');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error sending data to server:', error);
+            throw error;
+        }
+    }
+
+    downloadPDFFromServer(pdfUrl) {
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = `${this.concertData.name.replace(/[^a-zA-Z0-9]/g, '_')}_Ticket_${this.bookingData.bookingId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        this.showSuccessMessage('PDF ticket downloaded successfully!');
+    }
+
+    async generateClientSidePDF() {
+        try {
+            // Check if jsPDF is available
+            if (!window.jspdf) {
+                throw new Error('jsPDF library not loaded');
+            }
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('portrait', 'mm', 'a4');
             
@@ -90,12 +258,18 @@ class TicketPDFGenerator {
 
             // Concert image placeholder (if available)
             try {
-                const imageData = await this.getImageAsBase64(this.concertData.image);
-                if (imageData) {
-                    doc.addImage(imageData, 'JPEG', 15, ticketY + 10, 60, 40);
+                if (this.concertData.image) {
+                    const imageData = await this.getImageAsBase64(this.concertData.image);
+                    if (imageData) {
+                        doc.addImage(imageData, 'JPEG', 15, ticketY + 10, 60, 40);
+                    }
                 }
             } catch (error) {
-                // Fallback: draw a placeholder rectangle
+                console.log('Could not load concert image, using placeholder');
+            }
+
+            // If no image was added, draw placeholder
+            if (!this.concertData.image) {
                 doc.setFillColor(240, 240, 240);
                 doc.rect(15, ticketY + 10, 60, 40, 'F');
                 doc.setTextColor(...secondaryColor);
@@ -107,7 +281,7 @@ class TicketPDFGenerator {
             doc.setTextColor(0, 0, 0);
             doc.setFontSize(18);
             doc.setFont(undefined, 'bold');
-            doc.text(this.concertData.name, 85, ticketY + 20);
+            doc.text(this.concertData.name || 'Concert Event', 85, ticketY + 20);
 
             if (this.concertData.artist) {
                 doc.setFontSize(12);
@@ -136,7 +310,7 @@ class TicketPDFGenerator {
                 day: 'numeric', 
                 year: 'numeric' 
             }), leftColX, detailsY + 8);
-            doc.text(this.concertData.time, leftColX, detailsY + 16);
+            doc.text(this.concertData.time || '20:00', leftColX, detailsY + 16);
 
             // Venue
             doc.setFont(undefined, 'bold');
@@ -145,9 +319,9 @@ class TicketPDFGenerator {
             
             doc.setFont(undefined, 'normal');
             doc.setTextColor(0, 0, 0);
-            doc.text(this.concertData.venue, rightColX, detailsY + 8);
+            doc.text(this.concertData.venue || 'Concert Venue', rightColX, detailsY + 8);
             if (this.concertData.city) {
-                doc.text(`${this.concertData.city}, ${this.concertData.country}`, rightColX, detailsY + 16);
+                doc.text(`${this.concertData.city}${this.concertData.country ? ', ' + this.concertData.country : ''}`, rightColX, detailsY + 16);
             }
 
             // Ticket information section
@@ -166,10 +340,15 @@ class TicketPDFGenerator {
 
             doc.setFont(undefined, 'normal');
             doc.setTextColor(0, 0, 0);
-            doc.text(`Tickets: ${this.bookingData.ticketCount}`, leftColX, ticketInfoY + 10);
-            doc.text(`Price per ticket: $${this.concertData.price.toFixed(2)}`, leftColX, ticketInfoY + 18);
-            doc.text(`Total Amount: $${this.bookingData.totalAmount.toFixed(2)}`, leftColX, ticketInfoY + 26);
-            doc.text(`Payment Method: ${this.bookingData.paymentMethod.replace('_', ' ').toUpperCase()}`, leftColX, ticketInfoY + 34);
+            doc.text(`Tickets: ${this.bookingData.ticketCount || 1}`, leftColX, ticketInfoY + 10);
+            doc.text(`Price per ticket: $${(this.concertData.price || 100).toFixed(2)}`, leftColX, ticketInfoY + 18);
+            doc.text(`Total Amount: $${(this.bookingData.totalAmount || this.concertData.price || 100).toFixed(2)}`, leftColX, ticketInfoY + 26);
+            doc.text(`Payment Method: ${(this.bookingData.paymentMethod || 'paypal').replace('_', ' ').toUpperCase()}`, leftColX, ticketInfoY + 34);
+
+            // Customer Information
+            if (this.bookingData.customerInfo && this.bookingData.customerInfo.name) {
+                doc.text(`Customer: ${this.bookingData.customerInfo.name}`, leftColX, ticketInfoY + 42);
+            }
 
             // Booking ID
             doc.setFont(undefined, 'bold');
@@ -177,7 +356,7 @@ class TicketPDFGenerator {
             doc.text('BOOKING ID', rightColX, ticketInfoY);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(0, 0, 0);
-            doc.text(this.bookingData.bookingId, rightColX, ticketInfoY + 10);
+            doc.text(this.bookingData.bookingId || 'N/A', rightColX, ticketInfoY + 10);
 
             // QR Code section
             const qrY = 185;
@@ -192,11 +371,15 @@ class TicketPDFGenerator {
             doc.text('🔲 SCAN FOR ENTRY', 15, qrY + 15);
 
             // Generate QR code
-            const qrCodeData = this.generateQRCodeData();
-            const qrCodeDataURL = await this.generateQRCode(qrCodeData);
-            
-            if (qrCodeDataURL) {
-                doc.addImage(qrCodeDataURL, 'PNG', 15, qrY + 20, 40, 40);
+            try {
+                const qrCodeData = this.generateQRCodeData();
+                const qrCodeDataURL = await this.generateQRCode(qrCodeData);
+                
+                if (qrCodeDataURL) {
+                    doc.addImage(qrCodeDataURL, 'PNG', 15, qrY + 20, 40, 40);
+                }
+            } catch (error) {
+                console.error('Error generating QR code:', error);
             }
 
             // QR Code information
@@ -227,35 +410,88 @@ class TicketPDFGenerator {
             doc.text('Support: support@concerthub.com | www.concerthub.com', 15, footerY + 24);
 
             // Save the PDF
-            const fileName = `${this.concertData.name.replace(/[^a-zA-Z0-9]/g, '_')}_Ticket_${this.bookingData.bookingId}.pdf`;
+            const fileName = `${(this.concertData.name || 'Concert').replace(/[^a-zA-Z0-9]/g, '_')}_Ticket_${this.bookingData.bookingId || 'unknown'}.pdf`;
             doc.save(fileName);
+
+            // Log PDF generation to server (optional, will fail gracefully)
+            this.logPDFGeneration().catch(error => {
+                console.log('Could not log PDF generation to server:', error);
+            });
 
             // Show success message
             this.showSuccessMessage('PDF ticket downloaded successfully!');
 
         } catch (error) {
             console.error('Error generating PDF:', error);
-            alert('Error generating PDF. Please try again.');
+            alert('Error generating PDF. Please ensure all required libraries are loaded and try again.');
+        }
+    }
+
+    async logPDFGeneration() {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                             document.querySelector('input[name="_token"]')?.value || '';
+
+            const response = await fetch('/api/log-pdf-generation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    booking_id: this.bookingData.bookingId,
+                    concert_id: this.concertData.id,
+                    generation_method: 'client-side',
+                    timestamp: new Date().toISOString()
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                await response.json();
+            }
+        } catch (error) {
+            console.error('Error logging PDF generation:', error);
+            throw error;
         }
     }
 
     generateQRCodeData() {
         return JSON.stringify({
-            bookingId: this.bookingData.bookingId,
-            concertId: this.concertData.id,
-            concertName: this.concertData.name,
-            venue: this.concertData.venue,
-            date: this.concertData.date,
-            time: this.concertData.time,
-            tickets: this.bookingData.ticketCount,
-            totalAmount: this.bookingData.totalAmount,
-            timestamp: new Date().toISOString()
+            bookingId: this.bookingData.bookingId || 'unknown',
+            concertId: this.concertData.id || 'unknown',
+            concertName: this.concertData.name || 'Concert Event',
+            venue: this.concertData.venue || 'Unknown Venue',
+            date: this.concertData.date || new Date().toISOString().split('T')[0],
+            time: this.concertData.time || '20:00',
+            tickets: this.bookingData.ticketCount || 1,
+            totalAmount: this.bookingData.totalAmount || this.concertData.price || 100,
+            customerName: this.bookingData.customerInfo?.name || '',
+            timestamp: new Date().toISOString(),
+            verificationHash: this.generateVerificationHash()
         });
+    }
+
+    generateVerificationHash() {
+        const data = `${this.bookingData.bookingId || 'unknown'}-${this.concertData.id || 'unknown'}-${this.bookingData.totalAmount || 100}`;
+        return btoa(data).substring(0, 16);
     }
 
     async generateQRCode(data) {
         return new Promise((resolve) => {
             try {
+                // Check if qrcode library is available
+                if (typeof qrcode === 'undefined') {
+                    console.error('QR code library not available');
+                    resolve(null);
+                    return;
+                }
+
                 const qr = qrcode(0, 'M');
                 qr.addData(data);
                 qr.make();
@@ -303,15 +539,15 @@ class TicketPDFGenerator {
             img.crossOrigin = 'anonymous';
             
             img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                canvas.width = img.width;
-                canvas.height = img.height;
-                
-                ctx.drawImage(img, 0, 0);
-                
                 try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    ctx.drawImage(img, 0, 0);
+                    
                     const dataURL = canvas.toDataURL('image/jpeg', 0.8);
                     resolve(dataURL);
                 } catch (error) {
@@ -320,6 +556,12 @@ class TicketPDFGenerator {
             };
             
             img.onerror = () => reject(new Error('Failed to load image'));
+            
+            // Add timeout to prevent hanging
+            setTimeout(() => {
+                reject(new Error('Image load timeout'));
+            }, 10000);
+            
             img.src = imageSrc;
         });
     }
@@ -332,6 +574,9 @@ class TicketPDFGenerator {
             setTimeout(() => {
                 successDiv.style.display = 'none';
             }, 5000);
+        } else {
+            // Fallback: show alert if no success message element
+            alert(message);
         }
     }
 }
@@ -340,3 +585,4 @@ class TicketPDFGenerator {
 document.addEventListener('DOMContentLoaded', () => {
     new TicketPDFGenerator();
 });
+///////////////////////////////////////////////////////////////////////////////////////////////////

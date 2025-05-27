@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Concert = require('../models/Concert');
 
@@ -74,6 +75,8 @@ module.exports = {
         try {
             const { concertId, tickets ,  paymentMethod } = req.body;
             const userId = req.user._id;
+            console.log(concertId);
+            
 // Validation
             if (!concertId || !tickets || isNaN(tickets) || tickets < 1 || !paymentMethod) {
               
@@ -135,5 +138,52 @@ module.exports = {
             req.flash('error', err.message);
             res.redirect('/bookings');
         }
+    },
+    getUserBooking : async (req, res) => {
+  try {
+    // Find all bookings for the current user and populate concert details
+    const bookings = await Booking.find({ user: req.user._id })
+      .populate('concert', 'name date venue image ticketPrice')
+      .sort({ bookedAt: -1 }); // Sort by most recent first
+
+    res.render('/bookings/user-bookings', {
+      title: 'My Bookings',
+      bookings,
+      moment: require('moment') // For date formatting
+    });
+
+  } catch (err) {
+    console.error('Error fetching user bookings:', err);
+    res.render('error', { 
+      error: 'Failed to load your bookings. Please try again later.'
+    });
+  }
+},
+getBookingDetails : async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate('concert', 'name date venue artist description image ticketPrice')
+      .populate('user', 'name email');
+
+    // Check if booking exists and belongs to the current user
+    if (!booking || booking.user._id.toString() !== req.user._id.toString()) {
+      return res.render('error', { 
+        error: 'Booking not found or you do not have permission to view it'
+      });
     }
-};
+
+    res.render('bookings/details', {
+      title: 'Booking Details',
+      booking,
+      moment: require('moment') // For date formatting
+    });
+
+  } catch (err) {
+    console.error('Error fetching booking details:', err);
+    res.render('error', { 
+      error: 'Failed to load booking details. Please try again later.'
+    });
+  }
+}
+  };
+  

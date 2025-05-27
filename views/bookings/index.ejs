@@ -17,7 +17,7 @@
   <%- include('../partials/header') %>
 
   <main class="container my-5">
-    <div class="row">
+    <div class="row" >
       <!-- Concert Details Column -->
       <div class="col-md-6">
         <div class="concert-details-card card mb-4">
@@ -124,7 +124,7 @@
             <h4 class="mb-0">Book Tickets</h4>
           </div>
           <div class="card-body">
-            <form id="bookingForm">
+            <form  method="POST" action="/bookings/<%= concert._id %>" id="bookingForm">
               <input type="hidden" name="concertId" value="<%= concert._id %>">
               
               <div class="ticket-counter mb-3">
