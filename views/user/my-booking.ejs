@@ -3,60 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Booking - <%= booking.concert.name %></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>My Bookings</title>
+    <link rel="stylesheet" href="/css/booking.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .bookings-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .bookings-header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        .booking-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 20px;
+            align-items: center;
+        }
+        .booking-info h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .booking-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            color: #7f8c8d;
+        }
+        .booking-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-align: center;
+        }
+        .status-confirmed {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+        .status-cancelled {
+            background: #fadbd8;
+            color: #e74c3c;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        .btn-download {
+            background: #3498db;
+            color: white;
+        }
+        .btn-cancel {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .no-bookings {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            margin-top: 50px;
+        }
+        .error-message {
+            color: #e74c3c;
+            background: #fadbd8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .booking-meta {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .booking-date {
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+        .close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: white;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-left: auto;
+  transition: color 0.3s;
+}
+
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <% if (success) { %>
-            <div class="alert alert-success"><%= success %></div>
-        <% } %>
-        
-        <% if (error) { %>
-            <div class="alert alert-danger"><%= error %></div>
-        <% } %>
-        
-        <div class="card">
-            <div class="card-header">
-                <h2>Booking Details</h2>
-            </div>
-            <div class="card-body">
-                <h3><%= booking.concert.name %></h3>
-                <p><strong>Date:</strong> <%= new Date(booking.concert.date).toLocaleString() %></p>
-                <p><strong>Venue:</strong> <%= booking.concert.venue %></p>
-                <p><strong>Tickets:</strong> <%= booking.tickets %></p>
-                <p><strong>Price per ticket:</strong> $<%= booking.concert.ticketPrice %></p>
-                <p><strong>Total:</strong> $<%= booking.concert.ticketPrice * booking.tickets %></p>
-                <p><strong>Status:</strong> <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : 'warning' %>">
-                    <%= booking.status.toUpperCase() %>
-                </span></p>
-                <p><strong>Booked on:</strong> <%= new Date(booking.bookedAt).toLocaleString() %></p>
-                
-                <% if (booking.status === 'confirmed') { %>
-                    <button class="btn btn-danger" id="cancelBooking">Cancel Booking</button>
-                <% } %>
-                
-                <a href="/my-tickets" class="btn btn-secondary">Back to My Tickets</a>
-            </div>
+    <div class="bookings-container">
+        <div class="bookings-header">
+            <h1><i class="fas fa-ticket-alt"></i> My Bookings</h1>
+            <p>Manage your concert tickets</p>
         </div>
-    </div>
 
+        <% if (typeof bookings === 'undefined') { %>
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Error: Could not load bookings data. Please try again later.
+            </div>
+        <% } else if (bookings && bookings.length > 0) { %>
+            <% bookings.forEach(booking => { %>
+                <div class="booking-card">
+                    <div class="booking-info">
+                        <h3><%= booking.concert && booking.concert.name || 'Concert' %></h3>
+                        <div class="booking-details">
+                            <div>
+                                <i class="fas fa-calendar"></i> 
+                                <%= booking.concert && booking.concert.date ? new Date(booking.concert.date).toLocaleDateString() : 'Date not available' %>
+                            </div>
+                            <div>
+                                <i class="fas fa-clock"></i> 
+                                <%= booking.concert && booking.concert.time || 'Time not available' %>
+                            </div>
+                            <div>
+                                <i class="fas fa-map-marker-alt"></i> 
+                                <%= booking.concert && booking.concert.venue || 'Venue not available' %>
+                            </div>
+                            <div>
+                                <i class="fas fa-ticket-alt"></i> 
+                                <%= booking.tickets || booking.ticketCount || '0' %> tickets
+                            </div>
+                            <div>
+                                <i class="fas fa-dollar-sign"></i> 
+                                $<%= (booking.totalPrice || (booking.tickets * (booking.concert && booking.concert.ticketPrice || 0))).toFixed(2) %>
+                            </div>
+                            <div>
+                                <i class="fas fa-credit-card"></i> 
+                                <%= booking.paymentMethod ? booking.paymentMethod.replace('_', ' ') : 'Payment method not available' %>
+                            </div>
+                        </div>
+                        <div class="booking-meta">
+                            <span class="status-badge status-<%= booking.status || 'unknown' %>">
+                                <%= booking.status ? booking.status.toUpperCase() : 'UNKNOWN STATUS' %>
+                            </span>
+                            <span class="booking-date">
+                                <i class="fas fa-calendar-check"></i> 
+                                Booked on: <%= booking.bookedAt ? new Date(booking.bookedAt).toLocaleString() : 'N/A' %>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="booking-actions">
+                        <% if (booking.status === 'confirmed') { %>
+                            <a href="/bookings/<%= booking._id %>" class="btn btn-download">
+                                <i class="fas fa-download"></i> Download Ticket
+                            </a>
+                            <form method="POST" action="/bookings/<%= booking._id %>/cancel" 
+                                  onsubmit="return confirm('Are you sure you want to cancel this booking?')">
+                                <button type="submit" class="btn btn-cancel">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </form>
+                        <% } else { %>
+                            <span class="btn" style="background: #95a5a6; cursor: not-allowed;">
+                                <i class="fas fa-ban"></i> 
+                                <%= booking.status === 'cancelled' ? 'Cancelled' : 'Not Available' %>
+                                <% } %>
+                        <button type="button" class="close-btn" onclick="closeBookingCard(this)">
+  &times;
+</button>
+                            </span>
+                        
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="no-bookings">
+                <i class="fas fa-ticket-alt" style="font-size: 4em; margin-bottom: 20px; opacity: 0.5;"></i>
+                <p>You haven't booked any concerts yet.</p>
+                <a href="/concerts" class="btn btn-download" style="display: inline-block; margin-top: 20px;">
+                    <i class="fas fa-music"></i> Browse Concerts
+                </a>
+            </div>
+        <% } %>
+    </div>
     <script>
-        document.getElementById('cancelBooking')?.addEventListener('click', async () => {
-            if (confirm('Are you sure you want to cancel this booking?')) {
-                const response = await fetch(`/bookings/<%= booking._id %>/cancel`, {
-                    method: 'POST'
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    window.location.reload();
-                } else {
-                    alert(result.message || 'Cancellation failed');
-                }
-            }
-        });
-    </script>
+  function closeBookingCard(button) {
+    const bookingCard = button.closest('.booking-card');
+    if (bookingCard) {
+      bookingCard.remove();
+    }
+  }
+</script>
 </body>
 </html>

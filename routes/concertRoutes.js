@@ -6,6 +6,10 @@ const { isLoggedIn, isAdmin } = require('../middleware/auth');
 
 // Public Routes
 
+
+
+//All Bookings
+router.get('/get-all-bookings',isLoggedIn, isAdmin, concertController.getAllBookings)
 // Get all concerts
 router.get('/', concertController.getAllConcerts);
 // Show new concert form
@@ -28,5 +32,7 @@ router.put('/:id', isLoggedIn, isAdmin, upload.single('image'), concertControlle
 
 // Delete concert
 router.delete('/:id', isLoggedIn, isAdmin, concertController.deleteConcert);
+
+
 
 module.exports = router;

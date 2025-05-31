@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Concert = require('../models/Concert');
+const Booking = require('../models/Booking');
 
 // Get all concerts
 exports.getAllConcerts = async (req, res) => {
@@ -120,5 +121,72 @@ exports.deleteConcert = async (req, res) => {
   } catch (err) {
     req.flash('error', err.message);
     res.redirect('/concerts');
+  }
+};
+
+exports.getAllBookings = async(req,res) => {
+  try {
+    const bookings = await Booking.find()
+      .populate('concert', 'name date time venue ticketPrice availableTickets image')
+      .populate('user', 'email role')
+      .sort({ bookedAt: -1 });
+
+    // Format the data for the view
+    const formattedBookings = bookings.map(booking => {
+      const totalAmount = booking.amount || (booking.tickets * booking.concert.ticketPrice);
+      
+      return {
+        ...booking.toObject(),
+        name: booking.name || 'Guest User', // Add default if name doesn't exist
+        email: booking.email || (booking.user ? booking.user.email : ''),
+        phone: booking.phone || 'Not provided',
+        totalAmount: totalAmount,
+        formattedBookingDate: booking.bookedAt.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        formattedConcertDate: booking.concert.date.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        })
+      };
+    });
+
+    res.render('concerts/get-all-bookings', {
+      bookings: formattedBookings,
+      pageTitle: 'Booking Management',
+      helpers: {
+        statusBadge: (status) => {
+          const statusClasses = {
+            pending: 'bg-warning',
+            confirmed: 'bg-success',
+            cancelled: 'bg-danger',
+            failed: 'bg-secondary'
+          };
+          return `<span class="badge ${statusClasses[status]} text-white">${status.toUpperCase()}</span>`;
+        },
+        paymentBadge: (status) => {
+          const statusClasses = {
+            pending: 'bg-warning',
+            completed: 'bg-success',
+            failed: 'bg-danger',
+            refunded: 'bg-info'
+          };
+          return `<span class="badge ${statusClasses[status]} text-white">${status.toUpperCase()}</span>`;
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching bookings:', err);
+    res.render('error', {
+      error: 'Failed to load bookings. Please try again later.',
+      pageTitle: 'Error'
+    });
   }
 };
