@@ -1,28 +1,260 @@
- <%- include('../partials/header') %>
-<div class="card">
-    <div class="row g-0">
-        <div class="col-md-4">
-            <img src="<%= concert.image %>" class="img-fluid rounded-start" alt="<%= concert.name %>">
+
+<style>
+    .concert-detail-container {
+        background-color: #1a1a1a;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .concert-image-container {
+        position: relative;
+        height: 100%;
+        min-height: 300px;
+        background-color: #121212;
+    }
+    
+    .concert-main-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-right: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .concert-info {
+        padding: 2rem;
+    }
+    
+    .concert-title {
+        color: #d4af37;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        font-size: 2.2rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .detail-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px dashed rgba(212, 175, 55, 0.2);
+    }
+    
+    .detail-icon {
+        color: #d4af37;
+        width: 30px;
+        font-size: 1.2rem;
+        margin-right: 15px;
+    }
+    
+    .detail-content {
+        flex: 1;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #d4af37;
+        margin-bottom: 0.3rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .detail-value {
+        color: #f0f0f0;
+        font-size: 1.1rem;
+    }
+    
+    .ticket-available {
+        color: #d4af37;
+        font-weight: 600;
+    }
+    
+    .ticket-soldout {
+        color: #e74c3c;
+        font-weight: 600;
+    }
+    
+    .image-gallery {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .gallery-title {
+        color: #d4af37;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .gallery-image {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 2px solid rgba(212, 175, 55, 0.3);
+        transition: all 0.3s ease;
+        margin-bottom: 15px;
+    }
+    
+    .gallery-image:hover {
+        transform: scale(1.03);
+        border-color: #d4af37;
+    }
+    
+    .back-btn {
+        background-color: #2a2a2a;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        color: #f0f0f0;
+        padding: 0.7rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border-radius: 6px;
+    }
+    
+    .back-btn:hover {
+        background-color: #d4af37;
+        color: #121212;
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .concert-image-container {
+            min-height: 250px;
+            border-right: none;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        .concert-info {
+            padding: 1.5rem;
+        }
+        
+        .concert-title {
+            font-size: 1.8rem;
+        }
+    }
+    .time-display {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.5rem;
+    }
+    
+    .time-hours-minutes {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #f0f0f0;
+    }
+    
+    .time-timezone {
+        font-size: 0.8rem;
+        color: #aaaaaa;
+        font-style: italic;
+    }
+    
+    @media (max-width: 768px) {
+        .time-hours-minutes {
+            font-size: 1.1rem;
+        }
+        
+        .time-timezone {
+            font-size: 0.2rem;
+        }
+    }
+</style>
+
+<div class="container my-5">
+    <div class="concert-detail-container">
+        <div class="row g-0">
+            <!-- Main Image Column -->
+            <div class="col-md-4">
+            <img src="<%= concert.image %>" class="img-fluid rounded-start" alt="<%= concert.name %>" style="padding-top: 10px;width: 500px;height: 300px;">
         </div>
-        <div class="col-md-8">
-            <div class="card-body">
-                <h2 class="card-title"><%= concert.name %></h2>
-                <p class="card-text">
-                    <i class="fas fa-calendar-day"></i> <strong>Date:</strong> <%= concert.date.toDateString() %><br>
-                    <i class="fas fa-clock"></i> <strong>Time:</strong> <%= concert.time %><br>
-                    <i class="fas fa-map-marker-alt"></i> <strong>Venue:</strong> <%= concert.venue %><br>
-                    <i class="fas fa-ticket-alt"></i> <strong>Ticket Price:</strong> $<%= concert.ticketPrice %><br>
-                    <i class="fas fa-ticket-alt"></i> <strong>Available Tickets:</strong> <%= concert.availableTickets %>
-                    <% if (concert.image) { %>
-  <img src="/uploads/<%= concert.image %>" alt="Concert Image" width="300">
-<% } %>
-                </p>
-                <p class="card-text"><small class="text-muted">Added on <%= concert.createdAt.toDateString() %></small></p>
+            
+            <!-- Info Column -->
+            <div class="col-md-7">
+                <div class="concert-info">
+                    <h1 class="concert-title"><%= concert.name %></h1>
+                    
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-calendar-day"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">Date</div>
+                            <div class="detail-value"><%= concert.date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+    <div class="detail-icon"><i class="fas fa-clock"></i></div>
+    <div class="detail-content">
+        <div class="detail-label">Time</div>
+        <div class="detail-value">
+            <% 
+            // Format the time to 12-hour format with AM/PM
+            const timeString = concert.time;
+            const [hours, minutes] = timeString.split(':');
+            let hours12 = parseInt(hours, 10);
+            const ampm = hours12 >= 12 ? 'PM' : 'AM';
+            hours12 = hours12 % 12;
+            hours12 = hours12 ? hours12 : 12; // Convert 0 to 12
+            const formattedTime = `${hours12}:${minutes} ${ampm}`;
+            %>
+            <span class="time-display">
+                <span class="time-hours-minutes"><%= formattedTime %></span>
+                <span class="time-timezone">(Local Time)</span>
+            </span>
+        </div>
+    </div>
+</div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">Venue</div>
+                            <div class="detail-value"><%= concert.venue %></div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-ticket-alt"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">Ticket Price</div>
+                            <div class="detail-value">$<%= concert.ticketPrice.toFixed(2) %></div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-ticket-alt"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">Availability</div>
+                            <div class="detail-value <%= concert.availableTickets > 0 ? 'ticket-available' : 'ticket-soldout' %>">
+                                <%= concert.availableTickets > 0 ? concert.availableTickets + ' tickets available' : 'Sold Out' %>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Images Gallery -->
+                    <% if (concert.additionalImages && concert.additionalImages.length > 0) { %>
+                        <div class="image-gallery">
+                            <h4 class="gallery-title"><i class="fas fa-images me-2"></i>Gallery</h4>
+                            <div class="row">
+                                <!-- <% concert.additionalImages.forEach(image => { %>
+                                    <div class="col-4 col-md-3">
+                                        <img src="/uploads/<%= image %>" class="gallery-image" alt="<%= concert.name %> gallery image">
+                                    </div>
+                                <% }); %> -->
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <div class="mt-4 pt-3 border-top border-secondary">
+                        <a href="/concerts" class="back-btn" style="text-decoration: none;">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Concerts
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="card-footer">
-        <a href="/concerts" class="btn btn-secondary float-end">Back to All Concerts</a>
-    </div>
 </div>
-<%- include('../partials/footer') %>

@@ -1,38 +1,51 @@
-
- <%- include('../partials/header') %>
 <div class="container mt-4">
   <div class="row justify-content-center">
     <div class="col-md-6">
-      <div class="card">
-        <div class="card-header">
-          <h3>Sign Up</h3>
+      <div class="card border-0 shadow-lg" style="background: #1a1a1a; border-top: 3px solid #d4af37 !important;">
+        <div class="card-header border-0" style="background: #121212; color: #d4af37;">
+          <h3 class="m-0"><i class="fas fa-user-plus me-2"></i>Create Account</h3>
         </div>
         <div class="card-body">
           <% if (error) { %>
-            <div class="alert alert-danger"><%= error %></div>
+            <div class="alert alert-danger border-0 mb-4" style="background: #2c0e0e; color: #ff6b6b; border-left: 3px solid #ff6b6b;">
+              <i class="fas fa-exclamation-circle me-2"></i><%= error %>
+            </div>
           <% } %>
           <form action="/signup" method="POST">
-            <div class="mb-3">
-              <label class="form-label">Username</label>
-              <input type="text" name="username" class="form-control" required>
+            <div class="mb-4">
+              <label class="form-label" style="color: #d4af37;">Username</label>
+              <input type="text" name="username" class="form-control" required 
+                     style="background: #2a2a2a; border: 1px solid #444; color: #fff; padding: 10px;">
             </div>
-            <div class="mb-3">
-              <label class="form-label">Email</label>
-              <input type="email" name="email" class="form-control" required>
+            
+            <div class="mb-4">
+              <label class="form-label" style="color: #d4af37;">Email Address</label>
+              <input type="email" name="email" class="form-control" required 
+                     style="background: #2a2a2a; border: 1px solid #444; color: #fff; padding: 10px;">
             </div>
-            <div class="mb-3">
-              <label class="form-label">Password</label>
-              <input type="password" name="password" class="form-control" required>
+            
+            <div class="mb-4">
+              <label class="form-label" style="color: #d4af37;">Password</label>
+              <input type="password" name="password" class="form-control" required 
+                     style="background: #2a2a2a; border: 1px solid #444; color: #fff; padding: 10px;">
+              <small class="text-muted" style="color: #666 !important;">At least 8 characters</small>
             </div>
-            <button type="submit" class="btn btn-primary">Sign Up</button>
+            
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn hover-scale mt-2" 
+                      style="background-color: #d4af37; color: #121212; font-weight: 600; padding: 10px; border: none;">
+                <i class="fas fa-user-edit me-2"></i>Create Account
+              </button>
+            </div>
           </form>
         </div>
-        <div class="card-footer text-center">
-          Already have an account? <a href="/login">Login</a>
+        <div class="card-footer text-center border-0" style="background: #121212; color: #888;">
+          Already have an account? 
+          <a href="/login" class="text-decoration-none" style="color: #d4af37; font-weight: 500;">
+            <i class="fas fa-sign-in-alt me-1"></i>Login
+          </a>
         </div>
       </div>
     </div>
   </div>
-</div>
-
-<%- include('../partials/footer') %>
+</div> 

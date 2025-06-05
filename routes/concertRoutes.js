@@ -32,6 +32,8 @@ router.put('/:id', isLoggedIn, isAdmin, upload.single('image'), concertControlle
 
 // Delete concert
 router.delete('/:id', isLoggedIn, isAdmin, concertController.deleteConcert);
+// Add this new route for deleting bookings
+router.delete('/bookings/:id', concertController.deleteBooking);
 
 
 

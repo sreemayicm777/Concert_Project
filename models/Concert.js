@@ -37,7 +37,13 @@ const concertSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    totalAmount: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  
 });
 
 const Concert = mongoose.model('Concert', concertSchema);

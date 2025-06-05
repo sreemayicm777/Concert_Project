@@ -7,117 +7,250 @@
     <link rel="stylesheet" href="/css/booking.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4895ef;
+            --danger: #f72585;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
         .bookings-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
         }
+        
         .bookings-header {
             text-align: center;
-            margin-bottom: 40px;
-            color: white;
+            margin-bottom: 50px;
+            color: var(--dark);
         }
+        
+        .bookings-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--secondary);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .bookings-header h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+        
+        .bookings-header p {
+            font-size: 1.1rem;
+            color: var(--gray);
+        }
+        
         .booking-card {
             background: white;
-            border-radius: 15px;
+            border-radius: 12px;
             padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             display: grid;
             grid-template-columns: 1fr 200px;
-            gap: 20px;
+            gap: 25px;
             align-items: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 5px solid var(--accent);
         }
+        
+        .booking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+        
         .booking-info h3 {
-            color: #2c3e50;
+            color: var(--secondary);
             margin-bottom: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
+        
         .booking-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            color: #7f8c8d;
+            gap: 15px;
+            color: var(--gray);
         }
+        
+        .booking-details div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .booking-details i {
+            color: var(--accent);
+            width: 20px;
+            text-align: center;
+        }
+        
         .booking-actions {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
+        
         .status-badge {
-            padding: 5px 15px;
+            padding: 6px 15px;
             border-radius: 20px;
-            font-size: 0.9em;
+            font-size: 0.85em;
             font-weight: bold;
             text-align: center;
+            display: inline-block;
         }
+        
         .status-confirmed {
-            background: #d5f4e6;
-            color: #27ae60;
+            background: rgba(76, 201, 240, 0.2);
+            color: var(--success);
         }
+        
         .status-cancelled {
-            background: #fadbd8;
-            color: #e74c3c;
+            background: rgba(247, 37, 133, 0.2);
+            color: var(--danger);
         }
+        
         .btn {
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 25px;
+            border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
             text-align: center;
             font-size: 0.9em;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
+        
         .btn-download {
-            background: #3498db;
+            background: var(--primary);
             color: white;
         }
+        
         .btn-cancel {
-            background: #e74c3c;
+            background: var(--danger);
             color: white;
         }
+        
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
         .no-bookings {
             text-align: center;
-            color: white;
+            color: var(--gray);
             font-size: 1.2em;
             margin-top: 50px;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
         }
+        
         .error-message {
-            color: #e74c3c;
-            background: #fadbd8;
+            color: var(--danger);
+            background: rgba(247, 37, 133, 0.1);
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 8px;
             margin: 20px 0;
             text-align: center;
+            border-left: 4px solid var(--danger);
         }
+        
         .booking-meta {
-            margin-top: 15px;
+            margin-top: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
+        
         .booking-date {
-            font-size: 0.8em;
-            color: #7f8c8d;
+            font-size: 0.85em;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
+        
         .close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5em;
-  color: white;
-  cursor: pointer;
-  align-self: flex-start;
-  margin-left: auto;
-  transition: color 0.3s;
-}
-
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.3em;
+            cursor: pointer;
+            color: var(--gray);
+            transition: color 0.3s ease;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .close-btn:hover {
+            color: var(--danger);
+            background: rgba(247, 37, 133, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .booking-card {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .booking-actions {
+                flex-direction: row;
+                justify-content: flex-start;
+            }
+            
+            .bookings-header h1 {
+                font-size: 2rem;
+            }
+        }
     </style>
 </head>
 <body>
+
     <div class="bookings-container">
         <div class="bookings-header">
             <h1><i class="fas fa-ticket-alt"></i> My Bookings</h1>
@@ -132,6 +265,10 @@
         <% } else if (bookings && bookings.length > 0) { %>
             <% bookings.forEach(booking => { %>
                 <div class="booking-card">
+                    <button class="close-btn" onclick="closeBookingCard(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    
                     <div class="booking-info">
                         <h3><%= booking.concert && booking.concert.name || 'Concert' %></h3>
                         <div class="booking-details">
@@ -173,9 +310,7 @@
                     
                     <div class="booking-actions">
                         <% if (booking.status === 'confirmed') { %>
-                            <a href="/bookings/<%= booking._id %>" class="btn btn-download">
-                                <i class="fas fa-download"></i> Download Ticket
-                            </a>
+                           
                             <form method="POST" action="/bookings/<%= booking._id %>/cancel" 
                                   onsubmit="return confirm('Are you sure you want to cancel this booking?')">
                                 <button type="submit" class="btn btn-cancel">
@@ -183,21 +318,17 @@
                                 </button>
                             </form>
                         <% } else { %>
-                            <span class="btn" style="background: #95a5a6; cursor: not-allowed;">
+                            <span class="btn" style="background: var(--light-gray); cursor: not-allowed;">
                                 <i class="fas fa-ban"></i> 
                                 <%= booking.status === 'cancelled' ? 'Cancelled' : 'Not Available' %>
-                                <% } %>
-                        <button type="button" class="close-btn" onclick="closeBookingCard(this)">
-  &times;
-</button>
                             </span>
-                        
+                        <% } %>
                     </div>
                 </div>
             <% }); %>
         <% } else { %>
             <div class="no-bookings">
-                <i class="fas fa-ticket-alt" style="font-size: 4em; margin-bottom: 20px; opacity: 0.5;"></i>
+                <i class="fas fa-ticket-alt" style="font-size: 4em; margin-bottom: 20px; color: var(--accent);"></i>
                 <p>You haven't booked any concerts yet.</p>
                 <a href="/concerts" class="btn btn-download" style="display: inline-block; margin-top: 20px;">
                     <i class="fas fa-music"></i> Browse Concerts
@@ -206,12 +337,16 @@
         <% } %>
     </div>
     <script>
-  function closeBookingCard(button) {
-    const bookingCard = button.closest('.booking-card');
-    if (bookingCard) {
-      bookingCard.remove();
-    }
-  }
-</script>
+        function closeBookingCard(button) {
+            const bookingCard = button.closest('.booking-card');
+            if (bookingCard) {
+                bookingCard.style.transform = 'translateX(100%)';
+                bookingCard.style.opacity = '0';
+                setTimeout(() => {
+                    bookingCard.remove();
+                }, 300);
+            }
+        }
+    </script>
 </body>
 </html>

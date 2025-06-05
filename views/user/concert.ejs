@@ -1,191 +1,494 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 style="font-weight: bolder">Concerts</h1>
-  <div class="d-flex align-items-center gap-3">
-    <!-- View My Bookings Button -->
-   <a
-  href="/bookings/my-bookings/<%= user._id %>"
-  class="btn btn-success btn-animated position-relative"
->
-  <i class="fas fa-ticket-alt me-2"></i>
-  View My Bookings
-  <span
-    class="booking-badge badge bg-light text-dark ms-2"
-    id="booking-count"
-    style="display: none"
-    >0</span
-  >
-</a>  
-<!-- <li class="nav-item">
-  <a class="nav-link" href="/bookings/my-bookings">
-    <i class="fas fa-ticket-alt me-1"></i> My Bookings
-  </a>
-</li> -->
-    <!-- Items Per Page Dropdown -->
-    <div class="dropdown">
-      <button
-        class="btn btn-outline-secondary dropdown-toggle"
-        type="button"
-        id="itemsPerPageDropdown"
-        data-bs-toggle="dropdown"
-      >
-        <i class="fas fa-list me-1"></i>
-        Show: <span id="current-per-page">6</span>
-      </button>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="#" data-value="6">6 per page</a></li>
-        <li>
-          <a class="dropdown-item" href="#" data-value="12">12 per page</a>
-        </li>
-        <li>
-          <a class="dropdown-item" href="#" data-value="24">24 per page</a>
-        </li>
-        <li><a class="dropdown-item" href="#" data-value="0">Show all</a></li>
-      </ul>
-    </div>
-  </div>
-</div>
+<style>
+  :root {
+    --dark-bg: #121212;
+    --card-bg: #1e1e1e;
+    --gold: #f5c518;
+    --gold-light: #ffd700;
+    --text-light: #e0e0e0;
+    --text-muted: #9e9e9e;
+  }
 
-<!-- Add search and filter controls -->
-<div class="row mb-4">
-  <div class="col-md-6">
-    <div class="input-group">
-      <span class="input-group-text"><i class="fas fa-search"></i></span>
-      <input
-        type="text"
-        id="concert-search"
-        class="form-control"
-        placeholder="Search concerts..."
-      />
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="input-group">
-      <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-      <input type="date" id="date-filter" class="form-control" />
-      <button
-        class="btn btn-outline-secondary"
-        type="button"
-        id="clear-date"
-        title="Clear date filter"
-      >
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  </div>
-</div>
+  body {
+    background-color: var(--dark-bg);
+    color: var(--text-light);
+  }
 
-<!-- Results summary -->
-<div
-  id="results-summary"
-  class="d-flex justify-content-between align-items-center mb-3"
-  style="display: none !important"
->
-  <small class="text-muted">
-    <span id="results-count"></span>
-  </small>
-  <small class="text-muted">
-    <span id="page-info"></span>
-  </small>
-</div>
+  .card {
+    background-color: var(--card-bg);
+    border: 1px solid rgba(245, 197, 24, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+  }
 
-<!-- No results message (hidden by default) -->
-<div id="no-results" class="alert alert-info text-center" style="display: none">
-  <i class="fas fa-info-circle me-2"></i>
-  No concerts found matching your search criteria.
-  <button class="btn btn-link btn-sm ms-2" id="clear-filters">
-    Clear all filters
-  </button>
-</div>
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(245, 197, 24, 0.1);
+    border-color: rgba(245, 197, 24, 0.3);
+  }
 
-<% if (concerts.length === 0) { %>
-<div class="empty-state alert alert-info py-5">
-  <i class="fas fa-music"></i>
-  <h3>No concerts found</h3>
-  <p class="mb-0">Add your first concert or check back later for updates!</p>
-</div>
-<% } else { %>
-<div
-  class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"
-  id="concerts-container"
->
-  <% concerts.forEach(concert => { %>
-  <div
-    class="col concert-card"
-    data-title="<%= concert.name.toLowerCase() %>"
-    data-venue="<%= concert.venue.toLowerCase() %>"
-    data-date="<%= concert.date.toISOString().split('T')[0] %>"
-    data-price="<%= concert.ticketPrice %>"
-  >
-    <div class="card h-100 shadow-sm concert-item">
-      <img
-        src="<%= concert.image %>"
-        class="card-img-top"
-        alt="<%= concert.name %>"
-        onerror="this.onerror=null;this.src='/images/default-concert.jpg'"
-      />
-      <div class="card-body d-flex flex-column">
-        <h5 class="card-title"><%= concert.name %></h5>
-        <p class="card-text mb-1">
-          <i class="fas fa-calendar-day me-1"></i>
-          <%= concert.date.toLocaleDateString('en-US', { weekday: 'short',
-          month: 'short', day: 'numeric', year: 'numeric' }) %>
-        </p>
-        <p class="card-text mb-1">
-          <i class="fas fa-clock me-1"></i> <%= concert.time %>
-        </p>
-        <p class="card-text mb-1">
-          <i class="fas fa-map-marker-alt me-1"></i> <%= concert.venue %>
-        </p>
-        <div class="ticket-info mb-3">
-          <p class="card-text mb-0">
-            <i class="fas fa-ticket-alt me-1"></i>
-            $<%= concert.ticketPrice.toFixed(2) %> |
-            <span
-              class="<%= concert.availableTickets < 20 ? 'text-danger' : '' %>"
-            >
-              <%= concert.availableTickets %> available
-            </span>
-          </p>
-        </div>
-        <div class="mt-auto">
-          <a
-            href="/bookings/<%= concert._id %>"
-            class="btn btn-primary w-100 btn-book"
-          >
-            <i class="fas fa-ticket-alt me-1"></i> Book Now
-          </a>
-        </div>
+  .card-img-top {
+    height: 180px;
+    width: 100%;
+    object-fit: cover;
+    border-bottom: 2px solid var(--gold);
+  }
+
+  .card-title {
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-text {
+    color: var(--text-light);
+    font-size: 0.9rem;
+  }
+
+  .btn-primary {
+    background-color: var(--gold);
+    border-color: var(--gold);
+    color: #121212;
+    font-weight: 600;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--gold-light);
+    border-color: var(--gold-light);
+    color: #121212;
+  }
+
+  .btn-outline-secondary {
+    color: var(--text-light);
+    border-color: var(--text-muted);
+  }
+
+  .btn-outline-secondary:hover {
+    background-color: rgba(245, 197, 24, 0.1);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .dropdown-menu {
+    background-color: var(--card-bg);
+    border: 1px solid rgba(245, 197, 24, 0.1);
+  }
+
+  .dropdown-item {
+    color: var(--text-light);
+  }
+
+  .dropdown-item:hover {
+    background-color: rgba(245, 197, 24, 0.1);
+    color: var(--gold);
+  }
+
+  .input-group-text {
+    background-color: var(--card-bg);
+    color: var(--gold);
+    border-color: rgba(245, 197, 24, 0.1);
+  }
+
+  .form-control {
+    background-color: var(--card-bg);
+    color: var(--text-light);
+    border-color: rgba(245, 197, 24, 0.1);
+  }
+
+  .form-control:focus {
+    background-color: var(--card-bg);
+    color: var(--text-light);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 0.25rem rgba(245, 197, 24, 0.25);
+  }
+
+  .pagination .page-link {
+    background-color: var(--card-bg);
+    color: var(--text-light);
+    border-color: rgba(245, 197, 24, 0.1);
+  }
+
+  .pagination .page-item.active .page-link {
+    background-color: var(--gold);
+    border-color: var(--gold);
+    color: #121212;
+  }
+
+  .pagination .page-link:hover {
+    background-color: rgba(245, 197, 24, 0.1);
+    color: var(--gold);
+  }
+
+  .empty-state {
+    background-color: var(--card-bg);
+    color: var(--text-light);
+    border: 1px dashed var(--gold);
+  }
+
+  .empty-state i {
+    color: var(--gold);
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .alert-info {
+    background-color: rgba(245, 197, 24, 0.1);
+    border-color: rgba(245, 197, 24, 0.2);
+    color: var(--text-light);
+  }
+
+  .badge {
+    font-weight: 500;
+  }
+
+  .booking-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 0.7rem;
+    padding: 4px 6px;
+  }
+
+  .btn-animated {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-animated:hover {
+    transform: translateY(-2px);
+  }
+ 
+</style>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="text-gold" style="font-weight: 800; letter-spacing: 1px; color:white;">UPCOMING CONCERTS</h1>
+    <div class="d-flex align-items-center gap-3">
+      <!-- View My Bookings Button -->
+      <a href="/bookings/my-bookings/<%= user._id %>" class="btn btn-primary btn-animated position-relative" style="background-color:goldenrod;color: #121212;">
+        <i class="fas fa-ticket-alt me-2"></i>
+        MY BOOKINGS
+        <span class="booking-badge badge bg-dark text-gold" id="booking-count" style="display: none">0</span>
+      </a>
+      
+      <!-- Items Per Page Dropdown -->
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="itemsPerPageDropdown" data-bs-toggle="dropdown">
+          <i class="fas fa-list me-1"></i>
+          SHOW: <span id="current-per-page">6</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-dark">
+          <li><a class="dropdown-item" href="#" data-value="6">6 per page</a></li>
+          <li><a class="dropdown-item" href="#" data-value="12">12 per page</a></li>
+          <li><a class="dropdown-item" href="#" data-value="24">24 per page</a></li>
+          <li><a class="dropdown-item" href="#" data-value="0">Show all</a></li>
+        </ul>
       </div>
     </div>
   </div>
-  <% }); %>
-</div>
 
-<!-- Pagination Controls -->
-<div id="pagination-container" class="mt-5">
-  <!-- Show More Button (Alternative to pagination) -->
-  <div id="show-more-container" class="text-center mb-4" style="display: none">
-    <button id="show-more-btn" class="btn btn-outline-primary btn-lg">
-      <i class="fas fa-chevron-down me-2"></i>
-      Show More Concerts
-      <span class="badge bg-primary ms-2" id="remaining-count"></span>
+  <!-- Search and Filter -->
+  <div class="row mb-4 g-3">
+    <div class="col-md-6">
+      <div class="input-group shadow-sm" >
+        <span class="input-group-text bg-dark" ><i class="fas fa-search text-gold"></i></span>
+        <input type="text" id="concert-search" class="form-control" placeholder="Search concerts..." aria-label="Search concerts" style="background-color:goldenrod;">
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="input-group shadow-sm">
+        <span class="input-group-text bg-dark"><i class="fas fa-calendar text-gold"></i></span>
+        <input type="date" id="date-filter" class="form-control" aria-label="Filter by date" style="background-color:goldenrod;">
+        <button class="btn btn-outline-secondary" type="button" id="clear-date" title="Clear date filter">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Info -->
+  <div id="results-summary" class="d-flex justify-content-between align-items-center mb-3">
+    <small class="text-muted" style="margin-top: 20px;">
+      <span id="results-count" style="color: #e0e0e0;">concerts found</span> 
+    </small>
+    <small class="text-muted">
+      <span id="page-info"></span>
+    </small>
+  </div>
+
+  <!-- No Results Message -->
+  <div id="no-results" class="alert alert-dark text-center py-4" style="display: none; border-left: 4px solid var(--gold)">
+    <i class="fas fa-music me-2 text-gold"></i>
+    <span class="fw-bold">No concerts found matching your criteria</span>
+    <button class="btn btn-sm btn-link text-gold ms-2 p-0" id="clear-filters">
+      Clear filters
     </button>
   </div>
 
-  <!-- Traditional Pagination -->
-  <nav aria-label="Concert pagination" id="pagination-nav">
-    <ul class="pagination justify-content-center" id="pagination-list">
-      <!-- Pagination will be generated by JavaScript -->
-    </ul>
-  </nav>
+  <% if (concerts.length === 0) { %>
+    <div class="empty-state text-center p-5 rounded-3">
+      <i class="fas fa-music fa-3x mb-3"></i>
+      <h3 class="text-gold">NO CONCERTS AVAILABLE</h3>
+      <p class="mb-0">Check back later for upcoming events</p>
+    </div>
+  <% } else { %>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4" id="concerts-container" style="margin-top: 30px;">
+      <% concerts.forEach(concert => { %>
+      <div class="col concert-card" 
+           data-title="<%= concert.name.toLowerCase() %>"
+           data-venue="<%= concert.venue.toLowerCase() %>"
+           data-date="<%= concert.date.toISOString().split('T')[0] %>"
+           data-price="<%= concert.ticketPrice %>" >
+        <div class="card h-100 border-0" style="background-color: #f5c518;">
+          <div class="position-relative">
+            <img src="<%= concert.image %>" 
+                 class="card-img-top" 
+                 alt="<%= concert.name %>"
+                 onerror="this.onerror=null;this.src='/images/default-concert.jpg'">
+            <div class="position-absolute top-0 end-0 bg-dark px-2 py-1 m-2 rounded-pill">
+              <small class="text-gold" style="color: white;">$<%= concert.ticketPrice.toFixed(2) %></small>
+            </div>
+          </div>
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="card-title mb-0"><%= concert.name %></h5>
+              <span class="badge bg-dark text-gold"><%= concert.availableTickets %> left</span>
+            </div>
+            
+            <div class="concert-meta mb-3">
+              <div class="d-flex align-items-center mb-1">
+                <i class="fas fa-calendar-day me-2 text-gold" style="width: 20px;"></i>
+                <small><%= concert.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %></small>
+              </div>
+              <div class="d-flex align-items-center mb-1">
+                <i class="fas fa-clock me-2 text-gold" style="width: 20px;"></i>
+                <small><%= concert.time %></small>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="fas fa-map-marker-alt me-2 text-gold" style="width: 20px;"></i>
+                <small><%= concert.venue %></small>
+              </div>
+            </div>
+            
+            <div class="mt-auto pt-2" >
+              <a href="/bookings/<%= concert._id %>" class="btn btn-primary w-100 d-flex align-items-center justify-content-center"  style="background-color: #121212; text-decoration: none;">
+                <i class="fas fa-ticket-alt me-2"></i>
+                <span>GET TICKETS</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% }); %>
+    </div>
 
-  <!-- Pagination Info -->
-  <p class="text-center text-muted mt-2" id="pagination-info">
-    <!-- Page info will be updated by JavaScript -->
-  </p>
+    <!-- Pagination -->
+    <nav class="mt-5" aria-label="Concert pagination">
+      <ul class="pagination justify-content-center" id="pagination-list">
+        <!-- Pagination will be generated here -->
+      </ul>
+    </nav>
+  <% } %>
 </div>
-<% } %>
 
-<!-- Include the CSS and JS files -->
-<link rel="stylesheet" href="/css/booking.css" />
-<script src="/js/booking.js"></script>
+<script>
+  // Initialize tooltips
+  document.addEventListener('DOMContentLoaded', function() {
+    const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltips.map(tooltip => new bootstrap.Tooltip(tooltip));
+    
+    // Update booking count badge if exists
+    const bookingCount = document.getElementById('booking-count');
+    if (bookingCount) {
+      // You would fetch the actual count from your backend
+      // This is just for demonstration:
+      const count = Math.floor(Math.random() * 5) + 1;
+      if (count > 0) {
+        bookingCount.textContent = count;
+        bookingCount.style.display = 'inline-block';
+      }
+    }
+  });
+    document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltips.map(tooltip => new bootstrap.Tooltip(tooltip));
+    
+    // Update booking count badge if exists
+    const bookingCount = document.getElementById('booking-count');
+    if (bookingCount) {
+      // You would fetch the actual count from your backend
+      // This is just for demonstration:
+      const count = Math.floor(Math.random() * 5) + 1;
+      if (count > 0) {
+        bookingCount.textContent = count;
+        bookingCount.style.display = 'inline-block';
+      }
+    }
+
+    // Search and Filter Functionality
+    const concertCards = document.querySelectorAll('.concert-card');
+    const concertSearch = document.getElementById('concert-search');
+    const dateFilter = document.getElementById('date-filter');
+    const clearDate = document.getElementById('clear-date');
+    const clearFilters = document.getElementById('clear-filters');
+    const resultsSummary = document.getElementById('results-summary');
+    const resultsCount = document.getElementById('results-count');
+    const noResults = document.getElementById('no-results');
+
+    // Items per page functionality
+    const itemsPerPageDropdown = document.getElementById('itemsPerPageDropdown');
+    const currentPerPage = document.getElementById('current-per-page');
+    const dropdownItems = document.querySelectorAll('.dropdown-item[data-value]');
+    
+    let itemsPerPage = 6;
+    
+    dropdownItems.forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        itemsPerPage = parseInt(this.getAttribute('data-value'));
+        currentPerPage.textContent = itemsPerPage === 0 ? 'All' : itemsPerPage;
+        filterConcerts();
+      });
+    });
+
+    // Filter concerts based on search and date
+    function filterConcerts() {
+      const searchTerm = concertSearch.value.toLowerCase();
+      const filterDate = dateFilter.value;
+      let visibleCount = 0;
+      
+      // First, hide all cards
+      concertCards.forEach(card => {
+        card.style.display = 'none';
+      });
+      
+      // Then show only those that match the filters
+      concertCards.forEach(card => {
+        const title = card.getAttribute('data-title');
+        const venue = card.getAttribute('data-venue');
+        const date = card.getAttribute('data-date');
+        
+        const matchesSearch = searchTerm === '' || 
+          title.includes(searchTerm) || 
+          venue.includes(searchTerm);
+        
+        const matchesDate = filterDate === '' || 
+          date === filterDate;
+        
+        if (matchesSearch && matchesDate) {
+          card.style.display = 'block';
+          visibleCount++;
+        }
+      });
+      
+      // Update results summary
+      if (searchTerm || filterDate) {
+        resultsSummary.style.display = 'flex';
+        resultsCount.textContent = visibleCount;
+        
+        if (visibleCount === 0) {
+          noResults.style.display = 'block';
+        } else {
+          noResults.style.display = 'none';
+        }
+      } else {
+        resultsSummary.style.display = 'none';
+        noResults.style.display = 'none';
+      }
+      
+      // Handle pagination if not showing all
+      if (itemsPerPage > 0) {
+        handlePagination(visibleCount);
+      } else {
+        // Show all if itemsPerPage is 0
+        document.querySelectorAll('.concert-card[style="display: block"]').forEach(card => {
+          card.style.display = 'block';
+        });
+        document.getElementById('pagination-list').innerHTML = '';
+      }
+    }
+    
+    // Pagination function
+    function handlePagination(totalItems) {
+      const pageCount = Math.ceil(totalItems / itemsPerPage);
+      const paginationList = document.getElementById('pagination-list');
+      paginationList.innerHTML = '';
+      
+      if (pageCount <= 1) {
+        document.getElementById('page-info').textContent = '';
+        return;
+      }
+      
+      // Create pagination items
+      for (let i = 1; i <= pageCount; i++) {
+        const li = document.createElement('li');
+        li.className = 'page-item';
+        
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.textContent = i;
+        
+        a.addEventListener('click', function(e) {
+          e.preventDefault();
+          showPage(i);
+        });
+        
+        li.appendChild(a);
+        paginationList.appendChild(li);
+      }
+      
+      // Show first page by default
+      showPage(1);
+    }
+    
+    // Show specific page of results
+    function showPage(pageNumber) {
+      const visibleCards = document.querySelectorAll('.concert-card[style="display: block"]');
+      const startIndex = (pageNumber - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      
+      // Hide all first
+      visibleCards.forEach(card => {
+        card.style.display = 'none';
+      });
+      
+      // Show only those in current page
+      for (let i = startIndex; i < endIndex && i < visibleCards.length; i++) {
+        visibleCards[i].style.display = 'block';
+      }
+      
+      // Update page info
+      document.getElementById('page-info').textContent = `Page ${pageNumber} of ${Math.ceil(visibleCards.length / itemsPerPage)}`;
+      
+      // Update active state in pagination
+      const paginationItems = document.querySelectorAll('#pagination-list .page-item');
+      paginationItems.forEach((item, index) => {
+        if (index + 1 === pageNumber) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
+
+    // Event listeners
+    concertSearch.addEventListener('input', filterConcerts);
+    dateFilter.addEventListener('change', filterConcerts);
+    
+    clearDate.addEventListener('click', function() {
+      dateFilter.value = '';
+      filterConcerts();
+    });
+    
+    clearFilters.addEventListener('click', function() {
+      concertSearch.value = '';
+      dateFilter.value = '';
+      filterConcerts();
+    });
+
+    // Initialize filters
+    filterConcerts();
+  });
+</script>

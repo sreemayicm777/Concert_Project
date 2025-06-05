@@ -183,40 +183,89 @@ class ConcertTicketPDF {
     doc.text(`Booking ID: ${this.bookingData._id || this.bookingData.id || 'N/A'}`, 10, 75);
   }
 
-  async createQRCode(doc) {
-    try {
-      const qrData = JSON.stringify({
-        bookingId: this.bookingData._id || this.bookingData.id,
-        concert: this.concertData.name,
-        date: this.concertData.date
-      });
-      
-      const qr = new QRCode(0, 'L');
-      qr.addData(qrData);
-      qr.make();
-      
-      const size = 30;
-      const x = 60;
-      const y = 55;
-      const cells = qr.getModuleCount();
-      const cellSize = size / cells;
-      
-      for (let row = 0; row < cells; row++) {
-        for (let col = 0; col < cells; col++) {
-          if (qr.isDark(row, col)) {
-            doc.rect(x + col * cellSize, y + row * cellSize, cellSize, cellSize, 'F');
-          }
-        }
-      }
-      
-      doc.setFontSize(8);
-      doc.text('Scan for verification', x + size/2, y + size + 5, { align: 'center' });
-    } catch (error) {
-      console.error('QR code error:', error);
-      doc.setFontSize(10);
-      doc.text(`Booking ID: ${this.bookingData._id || this.bookingData.id}`, 60, 60);
-    }
+async createQRCode(doc) {
+  try {
+    // QR code URL
+    const qrCodeUrl = 'https://hexdocs.pm/qr_code/docs/qrcode.svg';
+    
+    // 1. Fetch the SVG QR code
+    const response = await fetch(qrCodeUrl);
+    if (!response.ok) throw new Error('Failed to fetch QR code');
+    const svgText = await response.text();
+    
+    // 2. Convert SVG to canvas
+    const canvas = document.createElement('canvas');
+    const size = 200; // QR code size in pixels
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    
+    // Create an image from the SVG
+    const img = new Image();
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgText)));
+    
+    // Wait for image to load
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
+    
+    // Draw the image on canvas
+    ctx.drawImage(img, 0, 0, size, size);
+    
+    // 3. Convert canvas to image data URL
+    const qrImageData = canvas.toDataURL('image/png');
+
+    // 4. Add QR code to PDF (position and size in mm)
+    const qrWidth = 30; // 30mm width
+    const qrHeight = 30; // 30mm height
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const x = (pageWidth - qrWidth) / 2; // Center horizontally
+    const y = 80; // Vertical position
+    
+    doc.addImage(
+      qrImageData,
+      'PNG',
+      x,
+      y,
+      qrWidth,
+      qrHeight
+    );
+
+    // 5. Add QR code label
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
+    doc.text(
+      'Scan to verify ticket',
+      pageWidth / 2,
+      y + qrHeight + 5,
+      { align: 'center' }
+    );
+
+    // 6. Add white background for better contrast
+    doc.setFillColor(255, 255, 255);
+    doc.rect(x - 2, y - 2, qrWidth + 4, qrHeight + 4, 'F');
+    // Redraw QR code on top
+    doc.addImage(
+      qrImageData,
+      'PNG',
+      x,
+      y,
+      qrWidth,
+      qrHeight
+    );
+
+  } catch (error) {
+    console.error('QR code generation failed:', error);
+    // Fallback: Show booking ID
+    doc.setFontSize(10);
+    doc.text(
+      `Booking ID: ${this.bookingData._id || this.bookingData.id}`,
+      10,
+      90
+    );
   }
+}
 
   createFooter(doc) {
     doc.setFontSize(6);

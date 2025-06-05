@@ -1,4 +1,29 @@
-<%- include('../partials/header') %>
+<style>
+  .badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+  }
+
+  .btn-outline-primary {
+    color: #f5c518;
+    border-color: #f5c518;
+  }
+
+  .btn-outline-primary:hover {
+    background-color: #f5c518;
+    color: #121212;
+  }
+
+  .btn-outline-danger {
+    color: #ff6b6b;
+    border-color: #ff6b6b;
+  }
+
+  .btn-outline-danger:hover {
+    background-color: #ff6b6b;
+    color: #121212;
+  }
+</style>
 <div class="container-fluid py-4">
   <div class="row">
     <div class="col-12">
@@ -9,7 +34,7 @@
             Total Bookings: <%= bookings.length %>
           </span>
         </div>
-       
+
         <div class="card-body">
           <% if (bookings.length === 0) { %>
             <div class="alert alert-info">
@@ -36,16 +61,22 @@
                         <small class="text-muted">#<%= booking._id.toString().slice(-6).toUpperCase() %></small>
                         <div class="small text-muted mt-1"><%= booking.formattedBookingDate %></div>
                       </td>
-                     
+
                       <td>
-                        <div class="fw-bold"><%= booking.name || 'Guest User' %></div>
-                        <div class="small text-muted"><%= booking.email %></div>
-                        <div class="small text-muted"><%= booking.phone || 'Not provided' %></div>
-                        <% if (booking.user) { %>
-                          <span class="badge bg-info mt-1">Registered User</span>
-                        <% } %>
+                        <div class="fw-bold">
+                          <% if (booking.user && booking.user.username) { %>
+                            <%= booking.user.username %>
+                            <span class="badge bg-info ms-2">Registered</span>
+                          <% } else { %>
+                            <%= booking.username || 'Guest User' %>
+                          <% } %>
+                        </div>
+                        <div class="small text-muted">
+                          <%= booking.user && booking.user.email ? booking.user.email : booking.email %>
+                        </div>
+                       
                       </td>
-                     
+
                       <td>
                         <div class="d-flex align-items-center">
                           <% if (booking.concert.image) { %>
@@ -54,34 +85,40 @@
                           <div>
                             <div class="fw-bold"><%= booking.concert.name %></div>
                             <div class="small text-muted"><%= booking.formattedConcertDate %></div>
-                            <div class="small text-muted"><%= booking.concert.time %> • <%= booking.concert.venue %></div>
+                            <div class="small text-muted">
+                              <%= booking.concert.time %> • <%= booking.concert.venue %>
+                            </div>
                           </div>
                         </div>
                       </td>
-                     
+
                       <td>
                         <div class="d-flex flex-column">
                           <span class="fw-bold"><%= booking.tickets %> Ticket(s)</span>
                           <span class="text-muted small">$<%= booking.concert.ticketPrice %> each</span>
-                          <span class="fw-bold mt-1">Total: $<%= (booking.amount || (booking.tickets * booking.concert.ticketPrice)).toFixed(2) %></span>
+                          <span class="fw-bold mt-1">
+                            Total: $<%= (booking.tickets * booking.concert.ticketPrice).toFixed(2) %>
+                          </span>
                         </div>
                       </td>
-                     
+
                       <td>
                         <div class="text-capitalize fw-bold"><%= booking.paymentMethod %></div>
                         <div class="mt-1"><%- helpers.paymentBadge(booking.paymentStatus) %></div>
-                        <% if (booking.qrCode) { %>
-                          <a href="<%= booking.qrCode %>" target="_blank" class="small text-primary mt-1">View QR Code</a>
+                        <% if (booking.razorpayOrderId) { %>
+                          <div class="small text-muted mt-1">Ref: <%= booking.razorpayOrderId %></div>
                         <% } %>
                       </td>
-                     
+
                       <td>
                         <%- helpers.statusBadge(booking.status) %>
                         <% if (booking.status === 'confirmed') { %>
-                          <div class="small text-success mt-1"><%= booking.concert.availableTickets %> tickets left</div>
+                          <div class="small text-success mt-1">
+                            <%= booking.concert.availableTickets %> tickets left
+                          </div>
                         <% } %>
                       </td>
-                     
+
                       <td class="text-nowrap">
                         <div class="d-flex gap-2">
                           <a href="/bookings/<%= booking._id %>"
@@ -98,7 +135,7 @@
                               <i class="fas fa-times"></i>
                             </button>
                           <% } %>
-                          <a href="mailto:<%= booking.email %>"
+                          <a href="mailto:<%= booking.user && booking.user.email ? booking.user.email : booking.email %>"
                              class="btn btn-sm btn-outline-secondary"
                              data-bs-toggle="tooltip"
                              title="Email User">
@@ -113,7 +150,7 @@
             </div>
           <% } %>
         </div>
-       
+
         <div class="card-footer bg-light">
           <div class="d-flex justify-content-between">
             <div class="small text-muted">
@@ -135,7 +172,24 @@
     button.addEventListener('click', function() {
       const bookingId = this.getAttribute('data-booking-id');
       if (confirm('Are you sure you want to cancel this booking?')) {
-        window.location.href = `/bookings/${bookingId}/cancel`;
+        fetch(`/bookings/${bookingId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            window.location.reload();
+          } else {
+            alert('Failed to cancel booking');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Failed to cancel booking');
+        });
       }
     });
   });
@@ -148,5 +202,3 @@
     });
   });
 </script>
-
-<%- include('../partials/footer') %>
