@@ -14,17 +14,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
-  <%- include('../partials/header') %>
-
+ 
   <main class="container my-5">
-    <div class="row" >
+    <div class="row">
       <!-- Concert Details Column -->
       <div class="col-md-6">
         <div class="concert-details-card card mb-4">
           <!-- Concert Image with Badge -->
           <div class="position-relative">
-            <img src="<%= concert.image || '/images/default-concert.jpg' %>" 
-                 class="card-img-top concert-main-image" 
+            <img src="<%= concert.image || '/images/default-concert.jpg' %>"
+                 class="card-img-top concert-main-image"
                  alt="<%= concert.name %>"
                  id="concertImage">
             <% if (concert.availableTickets < 10) { %>
@@ -33,7 +32,7 @@
               </span>
             <% } %>
           </div>
-
+ 
           <div class="card-body">
             <h1 class="card-title display-6 mb-3">
               <%= concert.name %>
@@ -41,16 +40,16 @@
                 <small class="text-muted d-block mt-1">by <%= concert.artist %></small>
               <% } %>
             </h1>
-
+ 
             <div class="concert-meta-grid mb-4">
               <div class="meta-item">
                 <i class="fas fa-calendar-day text-primary"></i>
                 <div>
                   <strong>Date</strong>
-                  <p><%= concert.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) %></p>
+                  <p><%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) %></p>
                 </div>
               </div>
-              
+             
               <div class="meta-item">
                 <i class="fas fa-clock text-primary"></i>
                 <div>
@@ -58,7 +57,7 @@
                   <p><%= concert.time %></p>
                 </div>
               </div>
-              
+             
               <div class="meta-item">
                 <i class="fas fa-map-marker-alt text-primary"></i>
                 <div>
@@ -69,7 +68,7 @@
                   <% } %>
                 </div>
               </div>
-              
+             
               <div class="meta-item">
                 <i class="fas fa-tag text-primary"></i>
                 <div>
@@ -78,13 +77,13 @@
                 </div>
               </div>
             </div>
-
+ 
             <div class="concert-description mb-4">
               <h5 class="d-flex justify-content-between align-items-center">
                 About the Event
-                <button class="btn btn-sm btn-outline-primary toggle-description" 
-                        type="button" 
-                        data-bs-toggle="collapse" 
+                <button class="btn btn-sm btn-outline-primary toggle-description"
+                        type="button"
+                        data-bs-toggle="collapse"
                         data-bs-target="#descriptionCollapse">
                   Show More
                 </button>
@@ -93,20 +92,20 @@
                 <p class="mt-2"><%= concert.description || 'No additional details available.' %></p>
               </div>
             </div>
-
+ 
             <div class="additional-details">
               <% if (concert.genre) { %>
                 <span class="badge bg-light text-dark me-2 mb-2">
                   <i class="fas fa-music me-1"></i> <%= concert.genre %>
                 </span>
               <% } %>
-              
+             
               <% if (concert.duration) { %>
                 <span class="badge bg-light text-dark me-2 mb-2">
                   <i class="fas fa-hourglass-half me-1"></i> <%= concert.duration %> mins
                 </span>
               <% } %>
-              
+             
               <% if (concert.ageRestriction) { %>
                 <span class="badge bg-light text-dark me-2 mb-2">
                   <i class="fas fa-user me-1"></i> <%= concert.ageRestriction %>+
@@ -116,94 +115,361 @@
           </div>
         </div>
       </div>
-
+ 
       <!-- Booking Form Column -->
       <div class="col-md-6">
         <div class="card booking-card">
-          <div class="card-header bg-primary text-white">
+          <div class="card-header bg-primary text-white ">
             <h4 class="mb-0">Book Tickets</h4>
           </div>
           <div class="card-body">
-            <form  method="POST" action="/bookings/<%= concert._id %>" id="bookingForm">
+            <form action="/bookings/book/<%= concert._id %>" method="POST" id="bookingForm">
               <input type="hidden" name="concertId" value="<%= concert._id %>">
+              <input type="hidden" name="userId" value="<%= user._id %>">
               
-              <div class="ticket-counter mb-3">
-                <label for="tickets" class="form-label">Tickets:</label>
+              <div class="mb-3">
+                <label for="username" class="form-label">Full Name</label>
+                <input type="text" class="form-control" id="username" name="username" 
+                      value="<%= user.username || '' %>" required>
+              </div>
                 
-                <input 
-                  type="number" 
-                  id="tickets" 
-                  class="form-control" 
-                  name="ticketCount" 
-                  min="1" 
-                  max="<%= concert.availableTickets %>"
-                  required
-                  data-price="<%= concert.ticketPrice %>"
-                  data-available="<%= concert.availableTickets %>"
-                  placeholder="Enter number of tickets"
-                >
-                <div id="ticket-error" class="alert alert-danger mt-2" style="display: none;">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  You can only book a maximum of 3 tickets per order.
-                </div>
-                
-                <label for="paymentMethod" class="form-label mt-3">Payment Method:</label>
+              <div class="mb-3">
+                <label for="ticketCount" class="form-label">Number of Tickets</label>
+                <select class="form-select" id="ticketCount" name="ticketCount" required onchange="updateTotalPrice()">
+                  <% for (let i = 1; i <= Math.min(3, concert.availableTickets || 0); i++) { %>
+                    <option value="<%= i %>"><%= i %></option>
+                  <% } %>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="totalPrice" class="form-label">Total Price</label>
+                <input type="text" class="form-control" id="totalPrice" name="totalPrice" 
+                      value="$<%= (concert.ticketPrice * 1).toFixed(2) || '0.00' %>" readonly>
+                <input type="hidden" id="totalPriceHidden" name="totalPriceHidden" 
+                      value="<%= (concert.ticketPrice * 1).toFixed(2) || '0.00' %>">
+              </div>
+
+              <div class="mb-3">
+                <label for="paymentMethod" class="form-label">Payment Method:</label>
                 <select class="form-select" id="paymentMethod" name="paymentMethod" required>
                   <option value="" selected disabled>Select payment method</option>
                   <option value="credit_card">Credit Card</option>
                   <option value="paypal">PayPal</option>
                   <option value="bank_transfer">Bank Transfer</option>
-                  <option value="crypto">Cryptocurrency</option>
                 </select>
               </div>
-
-              <div class="price-display mb-4">
-                <div id="error-message" class="alert alert-danger mb-4" style="display: none;"></div>
-                <div id="success-message" class="alert alert-success mb-4" style="display: none;"></div> 
-                <p class="fw-bold fs-5">Total: <span id="totalPrice">$<%= concert.ticketPrice.toFixed(2) %></span></p>
+              
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success btn-lg">
+                  <i class="fas fa-ticket-alt me-2"></i> Confirm Booking
+                </button>
               </div>
-
-              <button type="button" id="confirmBookingBtn" class="btn btn-primary w-100 py-2 mb-3">
-                <i class="fas fa-credit-card me-2"></i> Confirm Booking
-              </button>
               
               <!-- PDF Download Button (initially hidden) -->
-              <button type="button" id="downloadPdfBtn" class="btn btn-success w-100 py-2" style="display: none;">
+              <button type="button" id="downloadPdfBtn" class="btn btn-success w-100 py-2 mt-2" style="display: none;">
                 <i class="fas fa-download me-2"></i> Download Ticket PDF
               </button>
+
+              <div id="error-message" class="alert alert-danger mt-3" style="display: none;"></div>
+              <div id="success-message" class="alert alert-success mt-3" style="display: none;"></div>
             </form>
           </div>
         </div>
       </div>
     </div>
   </main>
-
-  <%- include('../partials/footer') %>
-
-  <!-- Hidden concert data for JavaScript -->
-  <script type="application/json" id="concertData">
-    {
-      "id": "<%= concert._id %>",
-      "name": "<%= concert.name %>",
-      "artist": "<%= concert.artist || '' %>",
-      "date": "<%= concert.date.toISOString() %>",
-      "time": "<%= concert.time %>",
-      "venue": "<%= concert.venue %>",
-      "city": "<%= concert.city || '' %>",
-      "country": "<%= concert.country || '' %>",
-      "price": <%= concert.ticketPrice %>,
-      "genre": "<%= concert.genre || '' %>",
-      "duration": "<%= concert.duration || '' %>",
-      "ageRestriction": "<%= concert.ageRestriction || '' %>",
-      "description": "<%= concert.description || '' %>",
-      "image": "<%= concert.image || '/images/default-concert.jpg' %>"
+ 
+ 
+  <!-- JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="/js/bookTicket.js"></script>
+  <script src="/js/pdfGenerator.js"></script>
+  <script src="/js/qrCodeUtils.js"></script>
+  <script>
+    function updateTotalPrice() {
+      const ticketCount = document.getElementById('ticketCount').value;
+      const pricePerTicket =" <%= concert.ticketPrice %>";
+      const totalPrice = (ticketCount * pricePerTicket).toFixed(2);
+      document.getElementById('totalPrice').value = '$' + totalPrice;
     }
   </script>
 
-  <!-- JavaScript Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/js/bookTicket.js"></script>
-  <script src="/js/pdfGenerator.js"></script>
-  <script src="/js/qrCodeUtils.js"></script>
+  <!-- Main Booking Script -->
+ <!-- <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize total price
+  updateTotalPrice();
+  
+  // Form submission handler
+  document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    try {
+      // Disable submit button
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+      
+      // Submit form data
+      const formData = new URLSearchParams(new FormData(this));
+      const response = await fetch(this.action, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Show success message
+        showSuccess('Booking confirmed! Download your ticket below.');
+        
+        // Show download button
+        document.getElementById('downloadPdfBtn').style.display = 'block';
+        
+        // Store normalized booking data for PDF generation
+        window.currentBooking = normalizeBookingData(result.booking);
+        
+        // Auto-download the ticket (optional)
+        // await downloadTicketPDF(window.currentBooking);
+      } else {
+        showError(result.message || 'Booking failed');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showError('An error occurred during booking');
+    } finally {
+      const submitBtn = document.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-ticket-alt me-2"></i> Confirm Booking';
+      }
+    }
+  });
+  
+  // PDF Download button handler
+  document.getElementById('downloadPdfBtn').addEventListener('click', async function() {
+    if (!window.currentBooking) {
+      showError('No booking data available');
+      return;
+    }
+    
+    try {
+      // Show loading state
+      this.disabled = true;
+      this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+      
+      // Use the enhanced PDF generator
+      await window.ConcertHubPDF.generateAndDownload(window.currentBooking);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      showError('Failed to generate PDF. Please try again.');
+    } finally {
+      // Restore button state
+      this.disabled = false;
+      this.innerHTML = '<i class="fas fa-download me-2"></i> Download Ticket';
+    }
+  });
+});
+
+// Normalize booking data from different API versions
+function normalizeBookingData(booking) {
+  return {
+    ...booking,
+    _id: booking._id || booking.id,
+    username: booking.username || booking.user?.name || 'Guest',
+    ticketCount: booking.ticketCount || booking.tickets || 1,
+    totalPrice: booking.totalPrice || booking.amount || 0,
+    concertDetails: {
+      name: booking.concertDetails?.name || booking.event?.name || 'Concert',
+      date: booking.concertDetails?.date || booking.event?.date || new Date(),
+      time: booking.concertDetails?.time || booking.event?.time || '19:00',
+      venue: booking.concertDetails?.venue || booking.event?.venue || 'Venue',
+      city: booking.concertDetails?.city || booking.event?.city,
+      ticketPrice: booking.concertDetails?.ticketPrice || booking.event?.price || 0
+    }
+  };
+}
+
+function updateTotalPrice() {
+  const ticketCount = document.getElementById('ticketCount').value;
+  const pricePerTicket = parseFloat("<%= concert.ticketPrice %>");
+  const totalPrice = (ticketCount * pricePerTicket).toFixed(2);
+  document.getElementById('totalPrice').value = '$' + totalPrice;
+  document.getElementById('totalPriceHidden').value = totalPrice;
+}
+
+function showError(message) {
+  const element = document.getElementById('error-message');
+  element.textContent = message;
+  element.style.display = 'block';
+  setTimeout(() => element.style.display = 'none', 5000);
+}
+
+function showSuccess(message) {
+  const element = document.getElementById('success-message');
+  element.textContent = message;
+  element.style.display = 'block';
+}
+
+// Professional PDF Generator (should be in separate pdfGenerator.js file)
+window.ConcertHubPDF = (function() {
+  const { jsPDF } = window.jspdf;
+  
+  class TicketGenerator {
+    constructor() {
+      this.ticketConfig = {
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [100, 150], // Standard ticket size
+        margins: { top: 10, left: 10, right: 10, bottom: 10 }
+      };
+    }
+    
+    async generate(bookingData) {
+      try {
+        this.validateBooking(bookingData);
+        const doc = new jsPDF(this.ticketConfig);
+        
+        this.createHeader(doc, bookingData);
+        this.createEventDetails(doc, bookingData);
+        this.createAttendeeInfo(doc, bookingData);
+        await this.createQRCode(doc, bookingData._id);
+        this.createFooter(doc);
+        this.addSecurityFeatures(doc, bookingData._id);
+        
+        return doc;
+      } catch (error) {
+        console.error('Ticket generation failed:', error);
+        throw error;
+      }
+    }
+    
+    validateBooking(booking) {
+      if (!booking) throw new Error('No booking data provided');
+      if (!booking._id) throw new Error('Missing booking ID');
+      if (!booking.concertDetails) throw new Error('Missing concert details');
+    }
+    
+    createHeader(doc, booking) {
+      // Header with gradient background
+      doc.setFillColor(30, 100, 200);
+      doc.rect(0, 0, 150, 15, 'F');
+      
+      // White title text
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('CONCERTHUB TICKET', 75, 8, { align: 'center' });
+      
+      // Event name
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.text(booking.concertDetails.name, 75, 25, { align: 'center' });
+    }
+    
+    createEventDetails(doc, booking) {
+      const event = booking.concertDetails;
+      const date = new Date(event.date);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      // Date and time
+      doc.text(`📅 ${date.toLocaleDateString('en-US', { 
+        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
+      })}`, 15, 40);
+      doc.text(`🕒 ${event.time}`, 15, 45);
+      
+      // Venue information
+      doc.text(`📍 ${event.venue}`, 15, 50);
+      if (event.city) doc.text(event.city, 15, 55);
+      
+      // Ticket information
+      doc.setFont('helvetica', 'bold');
+      doc.text(`🎟️ General Admission`, 100, 40);
+      doc.text(`🔢 ${booking.ticketCount} Ticket(s)`, 100, 45);
+    }
+    
+    async createQRCode(doc, bookingId) {
+      try {
+        const qr = new QRCode(0, 'L');
+        qr.addData(bookingId);
+        qr.make();
+        
+        const qrSize = 30;
+        const qrX = 110;
+        const qrY = 60;
+        const qrCells = qr.getModuleCount();
+        const cellSize = qrSize / qrCells;
+        
+        for (let row = 0; row < qrCells; row++) {
+          for (let col = 0; col < qrCells; col++) {
+            if (qr.isDark(row, col)) {
+              doc.rect(qrX + col * cellSize, qrY + row * cellSize, cellSize, cellSize, 'F');
+            }
+          }
+        }
+        
+        doc.setFontSize(8);
+        doc.text('Scan at entrance', qrX + qrSize/2, qrY + qrSize + 5, { align: 'center' });
+      } catch (error) {
+        console.error('QR code failed, using text fallback');
+        doc.setFontSize(10);
+        doc.text(`Booking ID: ${bookingId}`, 110, 70);
+      }
+    }
+    
+    createAttendeeInfo(doc, booking) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Ticket Holder: ${booking.username}`, 15, 70);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Booking ID: ${booking._id}`, 15, 75);
+      doc.text(`Tickets: ${booking.ticketCount}`, 15, 80);
+      doc.text(`Total Paid: $${booking.totalPrice.toFixed(2)}`, 15, 85);
+    }
+    
+    createFooter(doc) {
+      doc.setFontSize(6);
+      doc.setTextColor(100, 100, 100);
+      doc.text('• Non-transferable • Non-refundable • Right of admission reserved', 
+              75, 120, { align: 'center' });
+      doc.text('• Please arrive 30 minutes before showtime', 75, 124, { align: 'center' });
+      doc.text('• Problems? contact support@concerthub.com', 75, 128, { align: 'center' });
+    }
+    
+    addSecurityFeatures(doc, bookingId) {
+      // Watermark
+      doc.setFontSize(40);
+      doc.setTextColor(230, 230, 230);
+      doc.setFont('helvetica', 'bold');
+      doc.text('CONCERTHUB', 30, 80, { angle: 45 });
+      
+      // Microprint
+      doc.setFontSize(2);
+      doc.setTextColor(100, 100, 100);
+      for (let i = 0; i < 150; i += 5) {
+        doc.text(bookingId, i, 140);
+      }
+    }
+  }
+  
+  return {
+    generateAndDownload: async function(bookingData) {
+      const generator = new TicketGenerator();
+      const pdf = await generator.generate(bookingData);
+      pdf.save(`ConcertTicket_${bookingData._id}.pdf`);
+      return true;
+    }
+  };
+})();
+</script> -->
 </body>
 </html>

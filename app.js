@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const sharp = require('sharp');
 const mongoose = require('mongoose');
 const ejsLayouts = require('express-ejs-layouts');
 const methodOverride = require('method-override');

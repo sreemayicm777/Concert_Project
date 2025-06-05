@@ -23,7 +23,7 @@ router.get(
 
 // Create booking
 router.post(
-    '/:concertId',
+    '/book/:concertId',
     isLoggedIn,
     isUser,
     bookingController.bookTickets
@@ -37,12 +37,14 @@ router.post(
     bookingController.cancelBooking
 );
 
-// View all bookings for logged-in user
-router.get('/my-bookings', isLoggedIn, bookingController.getUserBooking);
 
-// View details of a specific booking
-router.get('/:id', isLoggedIn, bookingController.getBookingDetails);
-
+// View specific booking
+router.get(
+    '/my-bookings/:user_id',
+    isLoggedIn,
+    isUser,
+    bookingController.getBookingById
+);
 
 // Debug route
 router.get('/debug', (req, res) => {

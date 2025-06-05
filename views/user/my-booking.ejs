@@ -3,60 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Booking - <%= booking.concert.name %></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>My Bookings</title>
+    <link rel="stylesheet" href="/css/booking.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4895ef;
+            --danger: #f72585;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .bookings-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .bookings-header {
+            text-align: center;
+            margin-bottom: 50px;
+            color: var(--dark);
+        }
+        
+        .bookings-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--secondary);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .bookings-header h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+        
+        .bookings-header p {
+            font-size: 1.1rem;
+            color: var(--gray);
+        }
+        
+        .booking-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 25px;
+            align-items: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 5px solid var(--accent);
+        }
+        
+        .booking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+        
+        .booking-info h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .booking-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            color: var(--gray);
+        }
+        
+        .booking-details div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .booking-details i {
+            color: var(--accent);
+            width: 20px;
+            text-align: center;
+        }
+        
+        .booking-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .status-confirmed {
+            background: rgba(76, 201, 240, 0.2);
+            color: var(--success);
+        }
+        
+        .status-cancelled {
+            background: rgba(247, 37, 133, 0.2);
+            color: var(--danger);
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-download {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-cancel {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .no-bookings {
+            text-align: center;
+            color: var(--gray);
+            font-size: 1.2em;
+            margin-top: 50px;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        
+        .error-message {
+            color: var(--danger);
+            background: rgba(247, 37, 133, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            border-left: 4px solid var(--danger);
+        }
+        
+        .booking-meta {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .booking-date {
+            font-size: 0.85em;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.3em;
+            cursor: pointer;
+            color: var(--gray);
+            transition: color 0.3s ease;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .close-btn:hover {
+            color: var(--danger);
+            background: rgba(247, 37, 133, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .booking-card {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .booking-actions {
+                flex-direction: row;
+                justify-content: flex-start;
+            }
+            
+            .bookings-header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <% if (success) { %>
-            <div class="alert alert-success"><%= success %></div>
-        <% } %>
-        
-        <% if (error) { %>
-            <div class="alert alert-danger"><%= error %></div>
-        <% } %>
-        
-        <div class="card">
-            <div class="card-header">
-                <h2>Booking Details</h2>
-            </div>
-            <div class="card-body">
-                <h3><%= booking.concert.name %></h3>
-                <p><strong>Date:</strong> <%= new Date(booking.concert.date).toLocaleString() %></p>
-                <p><strong>Venue:</strong> <%= booking.concert.venue %></p>
-                <p><strong>Tickets:</strong> <%= booking.tickets %></p>
-                <p><strong>Price per ticket:</strong> $<%= booking.concert.ticketPrice %></p>
-                <p><strong>Total:</strong> $<%= booking.concert.ticketPrice * booking.tickets %></p>
-                <p><strong>Status:</strong> <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : 'warning' %>">
-                    <%= booking.status.toUpperCase() %>
-                </span></p>
-                <p><strong>Booked on:</strong> <%= new Date(booking.bookedAt).toLocaleString() %></p>
-                
-                <% if (booking.status === 'confirmed') { %>
-                    <button class="btn btn-danger" id="cancelBooking">Cancel Booking</button>
-                <% } %>
-                
-                <a href="/my-tickets" class="btn btn-secondary">Back to My Tickets</a>
-            </div>
-        </div>
-    </div>
 
+    <div class="bookings-container">
+        <div class="bookings-header">
+            <h1><i class="fas fa-ticket-alt"></i> My Bookings</h1>
+            <p>Manage your concert tickets</p>
+        </div>
+
+        <% if (typeof bookings === 'undefined') { %>
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Error: Could not load bookings data. Please try again later.
+            </div>
+        <% } else if (bookings && bookings.length > 0) { %>
+            <% bookings.forEach(booking => { %>
+                <div class="booking-card">
+                    <button class="close-btn" onclick="closeBookingCard(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    
+                    <div class="booking-info">
+                        <h3><%= booking.concert && booking.concert.name || 'Concert' %></h3>
+                        <div class="booking-details">
+                            <div>
+                                <i class="fas fa-calendar"></i> 
+                                <%= booking.concert && booking.concert.date ? new Date(booking.concert.date).toLocaleDateString() : 'Date not available' %>
+                            </div>
+                            <div>
+                                <i class="fas fa-clock"></i> 
+                                <%= booking.concert && booking.concert.time || 'Time not available' %>
+                            </div>
+                            <div>
+                                <i class="fas fa-map-marker-alt"></i> 
+                                <%= booking.concert && booking.concert.venue || 'Venue not available' %>
+                            </div>
+                            <div>
+                                <i class="fas fa-ticket-alt"></i> 
+                                <%= booking.tickets || booking.ticketCount || '0' %> tickets
+                            </div>
+                            <div>
+                                <i class="fas fa-dollar-sign"></i> 
+                                $<%= (booking.totalPrice || (booking.tickets * (booking.concert && booking.concert.ticketPrice || 0))).toFixed(2) %>
+                            </div>
+                            <div>
+                                <i class="fas fa-credit-card"></i> 
+                                <%= booking.paymentMethod ? booking.paymentMethod.replace('_', ' ') : 'Payment method not available' %>
+                            </div>
+                        </div>
+                        <div class="booking-meta">
+                            <span class="status-badge status-<%= booking.status || 'unknown' %>">
+                                <%= booking.status ? booking.status.toUpperCase() : 'UNKNOWN STATUS' %>
+                            </span>
+                            <span class="booking-date">
+                                <i class="fas fa-calendar-check"></i> 
+                                Booked on: <%= booking.bookedAt ? new Date(booking.bookedAt).toLocaleString() : 'N/A' %>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="booking-actions">
+                        <% if (booking.status === 'confirmed') { %>
+                           
+                            <form method="POST" action="/bookings/<%= booking._id %>/cancel" 
+                                  onsubmit="return confirm('Are you sure you want to cancel this booking?')">
+                                <button type="submit" class="btn btn-cancel">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </form>
+                        <% } else { %>
+                            <span class="btn" style="background: var(--light-gray); cursor: not-allowed;">
+                                <i class="fas fa-ban"></i> 
+                                <%= booking.status === 'cancelled' ? 'Cancelled' : 'Not Available' %>
+                            </span>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="no-bookings">
+                <i class="fas fa-ticket-alt" style="font-size: 4em; margin-bottom: 20px; color: var(--accent);"></i>
+                <p>You haven't booked any concerts yet.</p>
+                <a href="/concerts" class="btn btn-download" style="display: inline-block; margin-top: 20px;">
+                    <i class="fas fa-music"></i> Browse Concerts
+                </a>
+            </div>
+        <% } %>
+    </div>
     <script>
-        document.getElementById('cancelBooking')?.addEventListener('click', async () => {
-            if (confirm('Are you sure you want to cancel this booking?')) {
-                const response = await fetch(`/bookings/<%= booking._id %>/cancel`, {
-                    method: 'POST'
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    window.location.reload();
-                } else {
-                    alert(result.message || 'Cancellation failed');
-                }
+        function closeBookingCard(button) {
+            const bookingCard = button.closest('.booking-card');
+            if (bookingCard) {
+                bookingCard.style.transform = 'translateX(100%)';
+                bookingCard.style.opacity = '0';
+                setTimeout(() => {
+                    bookingCard.remove();
+                }, 300);
             }
-        });
+        }
     </script>
 </body>
 </html>

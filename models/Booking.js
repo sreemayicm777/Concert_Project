@@ -1,90 +1,116 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const bookingSchema = new mongoose.Schema({
-  concert: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Concert',
-    required: true
+const bookingSchema = new mongoose.Schema(
+  {
+    concert: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Concert",
+      required: [true, "Concert ID is required"],
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "User ID is required"],
+    },
+    username: {
+      type: String,
+      required: [true, "Username is required"],
+    },
+    email: {
+      type: String,
+      required: [false, "Email is required"],
+    },
+    ticketCount: {
+      type: Number,
+      required: [true, "Number of tickets is required"],
+      min: [1, "Minimum 1 ticket required"],
+      max: [10, "Maximum 10 tickets allowed"],
+    },
+    totalPrice: {
+      type: Number,
+      required: [true, "Amount is required"],
+      min: [0, "Amount cannot be negative"],
+    },
+    qrCode: {
+      type: String,
+      default: "https://hexdocs.pm/qr_code/docs/qrcode.svg",
+    },
+    paymentMethod: {
+      type: String,
+      required: [true, "Payment method is required"],
+      enum: {
+        values: ["credit_card", "paypal", "bank_transfer", "crypto"],
+        message: "Invalid payment method",
+      },
+      default: "credit_card",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "completed", "failed", "refunded"],
+      default: "pending",
+    },
+    bookedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    status: {
+      type: String,
+      enum: ["confirmed", "cancelled"],
+      default: "confirmed",
+    },
+    lastUpdated: {
+      type: Date,
+      default: Date.now,
+    },
+    concertDetails: {
+      name: String,
+      artist: String,
+      date: Date,
+      time: String,
+      venue: String,
+      image: String,
+    },
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  tickets: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 10
-  },
-  paymentMethod: {
-    type: String,
-    required: true,
-    enum: ['credit_card', 'paypal', 'bank_transfer', 'crypto'],
-    default: 'credit_card'
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'completed', 'failed', 'refunded'],
-    default: 'pending'
-  },
-  transactionId: {
-    type: String,
-    default: null
-  },
-  bookedAt: {
-    type: Date,
-    default: Date.now
-  },
-  status: {
-    type: String,
-    enum: ['confirmed', 'cancelled'],
-    default: 'confirmed'
+
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
+
+// Virtual for formatted booking date
+bookingSchema.virtual("formattedBookingDate").get(function () {
+  return this.bookedAt.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+});
+
+// Update timestamp before saving
+bookingSchema.pre("save", function (next) {
+  this.lastUpdated = Date.now();
+  next();
+});
+
+// Validate ticket availability
+bookingSchema.pre("save", async function (next) {
+  try {
+    const concert = await mongoose.model("Concert").findById(this.concert);
+
+    if (!concert) {
+      throw new Error("Concert not found");
+    }
+
+    if (this.tickets > concert.availableTickets) {
+      throw new Error(`Only ${concert.availableTickets} tickets available`);
+    }
+
+    next();
+  } catch (err) {
+    next(err);
   }
 });
 
-// Static method to handle ticket booking
-bookingSchema.statics.createBooking = async function(concertId, userId, ticketCount, paymentMethod) {
-  const Concert = require('./Concert');
-  
-  // Check concert availability
-  const concert = await Concert.findById(concertId);
-  if (!concert) {
-    throw new Error('Concert not found');
-  }
-  
-  if (concert.availableTickets < ticketCount) { 
-    throw new Error(`Only ${concert.availableTickets} tickets available`);
-  }
-
-  // Check user booking limit (max 10 per concert)
-  const existingBookings = await this.find({ 
-    concert: concertId, 
-    user: userId,
-    status: 'confirmed'
-  });
-  
-  const totalTickets = existingBookings.reduce((sum, booking) => sum + booking.tickets, 0);
-  
-  if (totalTickets + ticketCount > 3) {
-    throw new Error(`You can only book ${3 - totalTickets} more tickets for this concert`);
-  }
-
-  // Create booking
-  const booking = await this.create({
-    concert: concertId,
-    user: userId,
-    tickets: ticketCount,
-    paymentMethod: paymentMethod,
-    paymentStatus: 'completed'
-  });
-
-  // Update concert availability
-  concert.availableTickets -= ticketCount;
-  await concert.save();
-
-  return booking;
-};
-
-
-module.exports = mongoose.model('Booking', bookingSchema);
+module.exports = mongoose.model("Booking", bookingSchema);

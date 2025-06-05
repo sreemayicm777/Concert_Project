@@ -1,121 +1,157 @@
-const mongoose = require('mongoose');
-const Booking = require('../models/Booking');
-const Concert = require('../models/Concert');
+require("dotenv").config();
+const Booking = require("../models/Booking");
+const Concert = require("../models/Concert");
 
 module.exports = {
-    // Get all concerts available for booking
-    getUserBookingConcert: async (req, res) => {
-        try {
-            const concerts = await Concert.find().sort({ date: 1 });
-            res.render('user/concert', { concerts });
-        } catch (err) {
-            res.render('error', { error: err.message });
-        }
-    },
+  // Get all concerts available for booking
+  getUserBookingConcert: async (req, res) => {
+    try {
+      const concerts = await Concert.find().sort({ date: 1 });
+      res.render("user/concert", { concerts });
+    } catch (err) {
+      res.render("error", { error: err.message });
+    }
+  },
 
-    // Get a specific concert by ID
-    getConcertById: async (req, res) => {
-        try {
-            const concert = await Concert.findById(req.params.concert_id);
-            if (!concert) {
-                req.flash('error', 'Concert not found');
-                return res.redirect('/concerts');
-            }
-            res.render('bookings/index', { concert });
-        } catch (err) {
-            req.flash('error', err.message);
-            res.redirect('/concerts');
-        }
-    },
+  // Get a specific concert by ID
+  getConcertById: async (req, res) => {
+    try {
+      const concert = await Concert.findById(req.params.concert_id);
+      if (!concert) {
+        req.flash("error", "Concert not found");
+        return res.redirect("/concerts");
+      }
+      res.render("bookings/index", { concert });
+    } catch (err) {
+      req.flash("error", err.message);
+      res.redirect("/concerts");
+    }
+  },
 
-    //view all bookings
-    getAllBookings: async (req, res) => {
-        try {
-            const bookings = await Booking.find({ user: req.user._id }).populate('concert');
-            res.render('bookings/all', { bookings });
-        } catch (err) {
-            res.render('error', { error: err.message });
-        }
-    },
-    //view a specific booking by ID
-     getBookingById: async (req, res) => {
-        try {
-            const booking = await Booking.findById(req.params.booking_id)
-                .populate('concert')
-                .populate('user', 'name email');
-            
-            if (!booking || booking.user._id.toString() !== req.user._id.toString()) {
-                req.flash('error', 'Booking not found or unauthorized access');
-                return res.redirect('/bookings');
-            }
+  getBookingById: async (req, res) => {
+    try {
+      const userId = req.params.user_id;
+      const bookings = await Booking.find({user: userId})
+      // only concerts name 
+       .populate("concert", "name date time venue artist image ticketPrice")
+        .populate("user", "username email")
+      .sort({ bookedAt: -1 }) 
+      ;
+      if (!bookings) {
+        req.flash("error", "Booking not found");
+        return res.redirect("/bookings");
+      }
+      res.render("user/my-booking", { bookings });
+    } catch (err) {
+      req.flash("error", err.message);
+      res.redirect("/bookings");
+    }
+  },
 
-            console.debug('Booking Details:', {
-                id: booking._id,
-                concert: booking.concert.name,
-                tickets: booking.tickets,
-                status: booking.status,
-                user: booking.user.email
-            });
+ bookTickets: async (req, res) => {
+    try {
+      const { concertId, username, ticketCount, paymentMethod } = req.body;
+      const userId = req.user._id;
 
-            res.render('user/my-booking', { 
-                booking,
-                success: req.flash('success'),
-                error: req.flash('error')
-            });
-        } catch (err) {
-            console.error('Error fetching booking:', err);
-            req.flash('error', err.message);
-            res.redirect('/bookings');
-        }
-    },
-
-  
-    // Book tickets for a concert
-    bookTickets: async (req, res) => {
-        try {
-            const { concertId, tickets ,  paymentMethod } = req.body;
-            const userId = req.user._id;
-            console.log(concertId);
-            
-// Validation
-            if (!concertId || !tickets || isNaN(tickets) || tickets < 1 || !paymentMethod) {
-              
-                req.flash('error', 'Invalid booking request');
-                return res.redirect('bookings/index');
-            }
-
-            const booking = await Booking.createBooking(concertId, userId, parseInt(tickets), paymentMethod);
-            res.json({
-            success: true,
-            booking: {
-                _id: booking._id,
-                tickets: booking.tickets,
-                concert: {
-                    _id: booking.concert._id,
-                    name: booking.concert.name,
-                    date: booking.concert.date,
-                    venue: booking.concert.venue,
-                    ticketPrice: booking.concert.ticketPrice
-                },
-                user: booking.user._id
-            }
+      // Validate required fields
+      if (!concertId || !username || !ticketCount || !paymentMethod) {
+        return res.status(400).json({
+          success: false,
+          message: "All fields are required",
         });
-            req.flash('success', `Successfully booked ${booking.tickets} tickets!`);
-            res.redirect('/bookings/${booking._id}');
-        } catch (err) {
-          console.error('Booking error:', err);
-        if (req.accepts('json')) {
-            return res.status(500).json({
-                success: false,
-                message: err.message
-            });
-        }
-            req.flash('error', err.message);
-            res.redirect('back');
-        }
-    },
+      }
 
-    // Cancel a booking
+      // Check if user already has a booking for this concert
+      const existingBooking = await Booking.findOne({
+        user: userId,
+        concert: concertId,
+        status: 'confirmed'
+      });
+
+      if (existingBooking) {
+        return res.status(400).json({
+          success: false,
+          message: "You already have a booking for this concert",
+        });
+      }
+
+      // Validate ticket count
+      const ticketNum = parseInt(ticketCount);
+      if (isNaN(ticketNum)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid ticket count",
+        });
+      }
+
+      if (ticketNum > 3) {
+        return res.status(400).json({
+          success: false,
+          message: "Maximum 3 tickets per booking",
+        });
+      }
+
+      // Get concert and validate
+      const concert = await Concert.findById(concertId);
+      if (!concert) {
+        return res.status(404).json({
+          success: false,
+          message: "Concert not found",
+        });
+      }
+
+      if (concert.availableTickets < ticketNum) {
+        return res.status(400).json({
+          success: false,
+          message: "Not enough tickets available",
+        });
+      }
+
+      // Calculate total price
+      const totalPrice = concert.ticketPrice * ticketNum;
+
+      // Create booking with consistent field names
+      const booking = await Booking.create({
+        concert: concertId,
+        user: userId,
+        username,
+        ticketCount: ticketNum, // Matches schema
+        totalPrice, // Matches schema
+        paymentMethod,
+        bookingDate: new Date(),
+        status: "confirmed",
+        paymentStatus: "completed",
+        concertDetails: {
+          name: concert.name,
+          artist: concert.artist,
+          date: concert.date,
+          time: concert.time,
+          venue: concert.venue,
+          image: concert.image,
+        },
+      });
+
+      // Update concert availability
+      await Concert.findByIdAndUpdate(concertId, {
+        $inc: { availableTickets: -ticketNum },
+      });
+
+      res.json({
+        success: true,
+        message: "Booking confirmed - non-refundable",
+        booking: booking,
+      });
+    } catch (error) {
+      console.error("Booking error:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Booking service temporarily unavailable",
+      });
+    }
+  }, // Book tickets for a concert
+
+  // Cancel a booking
+   // Cancel a booking
     cancelBooking: async (req, res) => {
         try {
             const booking = await Booking.findById(req.params.id).populate('concert');
@@ -129,7 +165,7 @@ module.exports = {
 
             // Return tickets to concert availability
             const concert = booking.concert;
-            concert.availableTickets += booking.tickets;
+            concert.availableTickets += booking.ticketCount;
             await concert.save();
 
             req.flash('success', 'Booking cancelled successfully');
@@ -139,51 +175,5 @@ module.exports = {
             res.redirect('/bookings');
         }
     },
-    getUserBooking : async (req, res) => {
-  try {
-    // Find all bookings for the current user and populate concert details
-    const bookings = await Booking.find({ user: req.user._id })
-      .populate('concert', 'name date venue image ticketPrice')
-      .sort({ bookedAt: -1 }); // Sort by most recent first
-
-    res.render('/bookings/user-bookings', {
-      title: 'My Bookings',
-      bookings,
-      moment: require('moment') // For date formatting
-    });
-
-  } catch (err) {
-    console.error('Error fetching user bookings:', err);
-    res.render('error', { 
-      error: 'Failed to load your bookings. Please try again later.'
-    });
-  }
-},
-getBookingDetails : async (req, res) => {
-  try {
-    const booking = await Booking.findById(req.params.id)
-      .populate('concert', 'name date venue artist description image ticketPrice')
-      .populate('user', 'name email');
-
-    // Check if booking exists and belongs to the current user
-    if (!booking || booking.user._id.toString() !== req.user._id.toString()) {
-      return res.render('error', { 
-        error: 'Booking not found or you do not have permission to view it'
-      });
-    }
-
-    res.render('bookings/details', {
-      title: 'Booking Details',
-      booking,
-      moment: require('moment') // For date formatting
-    });
-
-  } catch (err) {
-    console.error('Error fetching booking details:', err);
-    res.render('error', { 
-      error: 'Failed to load booking details. Please try again later.'
-    });
-  }
-}
-  };
-  
+};
+//////////////////

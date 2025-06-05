@@ -1,13 +1,13 @@
-<%- include('partials/header') %>
-
+<!-- views/error.ejs -->
 <div class="container mt-5">
   <div class="alert alert-danger">
-    <h4><%= message %></h4>
-    <% if (error) { %>
-      <p><%= error.message %></p>
+    <h4><%= typeof message !== 'undefined' ? message : 'An error occurred' %></h4>
+    <% if (typeof error !== 'undefined') { %>
+      <p><%= error.message || 'No additional error details available' %></p>
+      <% if (process.env.NODE_ENV === 'development') { %>
+        <pre><%= JSON.stringify(error, null, 2) %></pre>
+      <% } %>
     <% } %>
   </div>
-  <a href="/concerts" class="btn btn-primary">Back to Concerts</a>
+  <a href="/" class="btn btn-primary">Return Home</a>
 </div>
-
-<%- include('partials/footer') %>
